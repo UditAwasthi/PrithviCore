@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --font-inter is injected by next/font in layout.tsx */
+:root {
+  --font-inter: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  background: #f4f9f5;
+  color: #1a2b1e;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #a3e0bb; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #2d8c4e; }
+
+/* ── Animations ────────────────────────────────────────────────────────── */
+@keyframes fadeIn  { from { opacity: 0 }              to { opacity: 1 } }
+@keyframes slideUp { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+.animate-fade-in  { animation: fadeIn  0.3s ease both; }
+.animate-slide-up { animation: slideUp 0.35s ease both; }
+
+/* ── Chart tooltip ─────────────────────────────────────────────────────── */
+.recharts-tooltip-wrapper { border-radius: 10px !important; }
+
