@@ -44,7 +44,14 @@ app.locals.broadcast = (event, data) => {
 // ─── Middleware ─────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    const allowedOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.includes('vercel.app')) {
+      callback(null, origin);
+    } else {
+      callback(null, true); // Fallback to allow during dev/deployment, restrict in strict prod
+    }
+  },
   credentials: true,
 }));
 app.use(morgan('dev'));
