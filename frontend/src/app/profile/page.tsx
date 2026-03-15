@@ -34,11 +34,11 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuth();
 
   const [form, setForm] = useState({
-    name:            user?.name ?? '',
-    phone:           user?.phone ?? '',
-    city:            user?.farm_location?.city    ?? '',
-    state:           user?.farm_location?.state   ?? '',
-    country:         user?.farm_location?.country ?? 'India',
+    name: user?.name ?? '',
+    phone: user?.phone ?? '',
+    city: user?.farm_location?.city ?? '',
+    state: user?.farm_location?.state ?? '',
+    country: user?.farm_location?.country ?? 'India',
     farm_size_acres: user?.farm_size_acres?.toString() ?? '',
   });
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -57,7 +57,7 @@ export default function ProfilePage() {
     }).then((r) => r.data as { user: AuthUser }),
     {
       onSuccess: (data) => { updateUser(data.user); toast.success('Profile updated!'); },
-      onError:   ()     => { toast.error('Failed to update profile'); },
+      onError: () => { toast.error('Failed to update profile'); },
     }
   );
 
@@ -112,13 +112,13 @@ export default function ProfilePage() {
             <h3 className="font-bold text-agri-700 mb-5">Personal Information</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field id="pf-name"  label="Full Name" value={form.name}  onChange={handleFormChange('name')}  placeholder="Your name"       autoComplete="name" />
-                <Field id="pf-phone" label="Phone"     value={form.phone} onChange={handleFormChange('phone')} placeholder="+91 9876543210" autoComplete="tel"  />
+                <Field id="pf-name" label="Full Name" value={form.name} onChange={handleFormChange('name')} placeholder="Your name" autoComplete="name" />
+                <Field id="pf-phone" label="Phone" value={form.phone} onChange={handleFormChange('phone')} placeholder="+91 9876543210" autoComplete="tel" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Field id="pf-city"    label="City"    value={form.city}    onChange={handleFormChange('city')}    placeholder="Nagpur"       autoComplete="address-level2" />
-                <Field id="pf-state"   label="State"   value={form.state}   onChange={handleFormChange('state')}   placeholder="Maharashtra"  autoComplete="address-level1" />
-                <Field id="pf-country" label="Country" value={form.country} onChange={handleFormChange('country')} placeholder="India"        autoComplete="country-name" />
+                <Field id="pf-city" label="City" value={form.city} onChange={handleFormChange('city')} placeholder="Nagpur" autoComplete="address-level2" />
+                <Field id="pf-state" label="State" value={form.state} onChange={handleFormChange('state')} placeholder="Maharashtra" autoComplete="address-level1" />
+                <Field id="pf-country" label="Country" value={form.country} onChange={handleFormChange('country')} placeholder="India" autoComplete="country-name" />
               </div>
               <Field id="pf-acres" label="Farm Size (acres)" type="number" value={form.farm_size_acres} onChange={handleFormChange('farm_size_acres')} placeholder="5" />
               <button type="button" onClick={() => profileMutation.mutate()} disabled={profileMutation.isLoading}
@@ -134,8 +134,8 @@ export default function ProfilePage() {
             <form onSubmit={handlePasswordSubmit} noValidate className="space-y-4">
               <Field id="pw-current" label="Current Password" type="password" value={pwForm.currentPassword} onChange={handlePwChange('currentPassword')} placeholder="••••••••" autoComplete="current-password" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field id="pw-new"     label="New Password"     type="password" value={pwForm.newPassword}     onChange={handlePwChange('newPassword')}     placeholder="Min 6 chars" autoComplete="new-password" />
-                <Field id="pw-confirm" label="Confirm Password" type="password" value={pwForm.confirmPassword} onChange={handlePwChange('confirmPassword')} placeholder="Repeat"      autoComplete="new-password" />
+                <Field id="pw-new" label="New Password" type="password" value={pwForm.newPassword} onChange={handlePwChange('newPassword')} placeholder="Min 6 chars" autoComplete="new-password" />
+                <Field id="pw-confirm" label="Confirm Password" type="password" value={pwForm.confirmPassword} onChange={handlePwChange('confirmPassword')} placeholder="Repeat" autoComplete="new-password" />
               </div>
               <button type="submit" disabled={passwordMutation.isLoading}
                 className="flex items-center gap-2 px-5 py-2.5 bg-agri-600 text-white text-sm font-bold rounded-xl hover:bg-agri-700 transition-colors disabled:opacity-60">

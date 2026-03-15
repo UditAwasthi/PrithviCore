@@ -7,11 +7,11 @@ import AppLayout from '@/components/layout/AppLayout';
 import { recommendationsAPI } from '@/lib/api';
 
 const PRIORITY_CFG = {
-  critical: { bg: 'bg-red-50 border-red-200',     badge: 'bg-red-100 text-red-700',      icon: <XCircle      size={18} className="text-red-500 flex-shrink-0" /> },
-  high:     { bg: 'bg-orange-50 border-orange-200', badge: 'bg-orange-100 text-orange-700', icon: <AlertTriangle size={18} className="text-orange-500 flex-shrink-0" /> },
-  medium:   { bg: 'bg-amber-50 border-amber-200',  badge: 'bg-amber-100 text-amber-700',  icon: <AlertTriangle size={18} className="text-amber-500 flex-shrink-0" /> },
-  low:      { bg: 'bg-blue-50 border-blue-200',    badge: 'bg-blue-100 text-blue-700',    icon: <Info          size={18} className="text-blue-500 flex-shrink-0" /> },
-  info:     { bg: 'bg-agri-50 border-agri-200',    badge: 'bg-agri-100 text-agri-700',   icon: <CheckCircle   size={18} className="text-agri-500 flex-shrink-0" /> },
+  critical: { bg: 'bg-red-50 border-red-200', badge: 'bg-red-100 text-red-700', icon: <XCircle size={18} className="text-red-500 flex-shrink-0" /> },
+  high: { bg: 'bg-orange-50 border-orange-200', badge: 'bg-orange-100 text-orange-700', icon: <AlertTriangle size={18} className="text-orange-500 flex-shrink-0" /> },
+  medium: { bg: 'bg-amber-50 border-amber-200', badge: 'bg-amber-100 text-amber-700', icon: <AlertTriangle size={18} className="text-amber-500 flex-shrink-0" /> },
+  low: { bg: 'bg-blue-50 border-blue-200', badge: 'bg-blue-100 text-blue-700', icon: <Info size={18} className="text-blue-500 flex-shrink-0" /> },
+  info: { bg: 'bg-agri-50 border-agri-200', badge: 'bg-agri-100 text-agri-700', icon: <CheckCircle size={18} className="text-agri-500 flex-shrink-0" /> },
 } as const;
 type PKey = keyof typeof PRIORITY_CFG;
 
@@ -28,10 +28,10 @@ export default function RecommendationsPage() {
     { refetchInterval: 2 * 60_000 }
   );
 
-  const recs     = data?.recommendations ?? [];
+  const recs = data?.recommendations ?? [];
   const critical = recs.filter((r) => r.priority === 'critical').length;
-  const high     = recs.filter((r) => r.priority === 'high').length;
-  const snap     = data?.sensor_snapshot;
+  const high = recs.filter((r) => r.priority === 'high').length;
+  const snap = data?.sensor_snapshot;
 
   return (
     <AppLayout>
@@ -49,9 +49,9 @@ export default function RecommendationsPage() {
       {/* Summary pills */}
       <div className="flex gap-3 mb-6 flex-wrap">
         {[
-          { label: 'Total',         count: recs.length, color: 'bg-gray-100 text-gray-700' },
-          { label: 'Critical',      count: critical,    color: 'bg-red-100 text-red-700' },
-          { label: 'High Priority', count: high,        color: 'bg-orange-100 text-orange-700' },
+          { label: 'Total', count: recs.length, color: 'bg-gray-100 text-gray-700' },
+          { label: 'Critical', count: critical, color: 'bg-red-100 text-red-700' },
+          { label: 'High Priority', count: high, color: 'bg-orange-100 text-orange-700' },
         ].map((p) => (
           <div key={p.label} className={`px-4 py-1.5 rounded-full text-sm font-bold ${p.color}`}>
             {p.count} {p.label}
@@ -70,13 +70,13 @@ export default function RecommendationsPage() {
           <p className="text-xs font-bold text-agri-600 uppercase tracking-wide mb-2">Sensor Snapshot</p>
           <div className="flex gap-3 flex-wrap text-sm">
             {[
-              { label: 'Moisture',    val: snap.moisture    != null ? `${snap.moisture.toFixed(1)}%`     : '–' },
+              { label: 'Moisture', val: snap.moisture != null ? `${snap.moisture.toFixed(1)}%` : '–' },
               { label: 'Temperature', val: snap.temperature != null ? `${snap.temperature.toFixed(1)}°C` : '–' },
-              { label: 'Humidity',    val: snap.humidity    != null ? `${snap.humidity.toFixed(1)}%`     : '–' },
-              { label: 'pH',          val: snap.ph          != null ? snap.ph.toFixed(2)                 : '–' },
-              { label: 'N',           val: snap.nitrogen    != null ? `${snap.nitrogen.toFixed(0)} mg/kg`    : '–' },
-              { label: 'P',           val: snap.phosphorus  != null ? `${snap.phosphorus.toFixed(0)} mg/kg`  : '–' },
-              { label: 'K',           val: snap.potassium   != null ? `${snap.potassium.toFixed(0)} mg/kg`   : '–' },
+              { label: 'Humidity', val: snap.humidity != null ? `${snap.humidity.toFixed(1)}%` : '–' },
+              { label: 'pH', val: snap.ph != null ? snap.ph.toFixed(2) : '–' },
+              { label: 'N', val: snap.nitrogen != null ? `${snap.nitrogen.toFixed(0)} mg/kg` : '–' },
+              { label: 'P', val: snap.phosphorus != null ? `${snap.phosphorus.toFixed(0)} mg/kg` : '–' },
+              { label: 'K', val: snap.potassium != null ? `${snap.potassium.toFixed(0)} mg/kg` : '–' },
             ].map((item) => (
               <div key={item.label} className="bg-white rounded-lg px-3 py-1.5 text-gray-700 border border-agri-100 text-xs">
                 <span className="text-agri-500 font-semibold">{item.label}:</span> {item.val}
@@ -93,7 +93,7 @@ export default function RecommendationsPage() {
       )}
 
       {isLoading ? (
-        <div className="space-y-4">{[1,2,3,4].map((i) => <div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />)}</div>
+        <div className="space-y-4">{[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />)}</div>
       ) : recs.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-agri-100">
           <div className="text-5xl mb-4">🌱</div>

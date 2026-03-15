@@ -19,8 +19,8 @@ interface SensorReading {
   timestamp: string;
 }
 interface Recommendation { id: string; icon: string; title: string; action: string; priority: string; }
-interface DiseaseResult  { disease_name: string; severity: string; confidence: number; treatment: string; }
-interface DashboardData  {
+interface DiseaseResult { disease_name: string; severity: string; confidence: number; treatment: string; }
+interface DashboardData {
   latest_reading: SensorReading | null;
   weekly_trend: Record<string, number | string>[];
   recommendations: Recommendation[];
@@ -29,25 +29,25 @@ interface DashboardData  {
 interface WeatherCurrent { temperature: number; description: string; humidity: number; wind_speed: number; icon: string; city: string; }
 
 function moistureStatus(v: number) {
-  if (v < 20) return { status: 'danger'  as const, statusLabel: 'Critical Low' };
+  if (v < 20) return { status: 'danger' as const, statusLabel: 'Critical Low' };
   if (v < 35) return { status: 'warning' as const, statusLabel: 'Low' };
   if (v > 70) return { status: 'warning' as const, statusLabel: 'Waterlogged' };
-  return       { status: 'optimal' as const, statusLabel: 'Optimal' };
+  return { status: 'optimal' as const, statusLabel: 'Optimal' };
 }
 function tempStatus(v: number) {
-  if (v > 35) return { status: 'danger'  as const, statusLabel: 'Heat Stress' };
+  if (v > 35) return { status: 'danger' as const, statusLabel: 'Heat Stress' };
   if (v < 10) return { status: 'warning' as const, statusLabel: 'Cold Risk' };
-  return       { status: 'optimal' as const, statusLabel: 'Normal' };
+  return { status: 'optimal' as const, statusLabel: 'Normal' };
 }
 function phStatus(v: number) {
-  if (v < 5.5 || v > 8.0) return { status: 'danger'  as const, statusLabel: v < 5.5 ? 'Acidic' : 'Alkaline' };
+  if (v < 5.5 || v > 8.0) return { status: 'danger' as const, statusLabel: v < 5.5 ? 'Acidic' : 'Alkaline' };
   if (v < 6.0 || v > 7.5) return { status: 'warning' as const, statusLabel: 'Marginal' };
-  return                    { status: 'optimal' as const, statusLabel: 'Optimal' };
+  return { status: 'optimal' as const, statusLabel: 'Optimal' };
 }
 function npkStatus(v: number, low: number) {
-  if (v < low)       return { status: 'danger'  as const, statusLabel: 'Low' };
+  if (v < low) return { status: 'danger' as const, statusLabel: 'Low' };
   if (v < low * 1.3) return { status: 'warning' as const, statusLabel: 'Marginal' };
-  return              { status: 'optimal' as const, statusLabel: 'Good' };
+  return { status: 'optimal' as const, statusLabel: 'Good' };
 }
 
 export default function DashboardPage() {
@@ -72,10 +72,10 @@ export default function DashboardPage() {
   );
   useWebSocket(wsHandler);
 
-  const s    = dash?.latest_reading ?? null;
+  const s = dash?.latest_reading ?? null;
 
-  const wkly = dash?.weekly_trend   ?? [];
-  const recs  = dash?.recommendations ?? [];
+  const wkly = dash?.weekly_trend ?? [];
+  const recs = dash?.recommendations ?? [];
 
   return (
     <AppLayout>
@@ -115,19 +115,19 @@ export default function DashboardPage() {
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <SensorCard label="Soil Moisture" value={s?.moisture}    unit="%"  icon="💧" loading={isLoading} {...(s ? moistureStatus(s.moisture)    : { status: 'info' as const })} />
-        <SensorCard label="Temperature"   value={s?.temperature} unit="°C" icon="🌡️" loading={isLoading} {...(s ? tempStatus(s.temperature)     : { status: 'info' as const })} />
-        <SensorCard label="Humidity"      value={s?.humidity}    unit="%"  icon="🌫️" loading={isLoading}
+        <SensorCard label="Soil Moisture" value={s?.moisture} unit="%" icon="💧" loading={isLoading} {...(s ? moistureStatus(s.moisture) : { status: 'info' as const })} />
+        <SensorCard label="Temperature" value={s?.temperature} unit="°C" icon="🌡️" loading={isLoading} {...(s ? tempStatus(s.temperature) : { status: 'info' as const })} />
+        <SensorCard label="Humidity" value={s?.humidity} unit="%" icon="🌫️" loading={isLoading}
           status={s ? (s.humidity > 85 ? 'warning' : 'info') : 'info'}
           statusLabel={s ? (s.humidity > 85 ? 'High' : 'Normal') : undefined}
         />
-        <SensorCard label="Soil pH"       value={s?.ph}          unit="pH" icon="🧪" loading={isLoading} {...(s ? phStatus(s.ph)               : { status: 'info' as const })} />
+        <SensorCard label="Soil pH" value={s?.ph} unit="pH" icon="🧪" loading={isLoading} {...(s ? phStatus(s.ph) : { status: 'info' as const })} />
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <SensorCard label="Nitrogen (N)"   value={s?.nitrogen}   unit="mg/kg" icon="🌿" loading={isLoading} {...(s ? npkStatus(s.nitrogen,   50) : { status: 'info' as const })} />
+        <SensorCard label="Nitrogen (N)" value={s?.nitrogen} unit="mg/kg" icon="🌿" loading={isLoading} {...(s ? npkStatus(s.nitrogen, 50) : { status: 'info' as const })} />
         <SensorCard label="Phosphorus (P)" value={s?.phosphorus} unit="mg/kg" icon="🌾" loading={isLoading} {...(s ? npkStatus(s.phosphorus, 25) : { status: 'info' as const })} />
-        <SensorCard label="Potassium (K)"  value={s?.potassium}  unit="mg/kg" icon="🍂" loading={isLoading} {...(s ? npkStatus(s.potassium,  30) : { status: 'info' as const })} />
+        <SensorCard label="Potassium (K)" value={s?.potassium} unit="mg/kg" icon="🍂" loading={isLoading} {...(s ? npkStatus(s.potassium, 30) : { status: 'info' as const })} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -153,9 +153,8 @@ export default function DashboardPage() {
             {recs.length === 0 ? (
               <p className="text-sm text-gray-400 py-4 text-center">Connect a sensor to get recommendations</p>
             ) : recs.slice(0, 3).map((r) => (
-              <div key={r.id} className={`flex gap-3 p-3 rounded-xl text-sm ${
-                r.priority === 'critical' ? 'bg-red-50' : r.priority === 'high' ? 'bg-amber-50' :
-                r.priority === 'medium'   ? 'bg-blue-50' : 'bg-agri-50'}`}>
+              <div key={r.id} className={`flex gap-3 p-3 rounded-xl text-sm ${r.priority === 'critical' ? 'bg-red-50' : r.priority === 'high' ? 'bg-amber-50' :
+                  r.priority === 'medium' ? 'bg-blue-50' : 'bg-agri-50'}`}>
                 <span className="text-lg flex-shrink-0">{r.icon}</span>
                 <div>
                   <p className="font-semibold text-gray-800 text-xs">{r.title}</p>
@@ -173,9 +172,8 @@ export default function DashboardPage() {
           </div>
           {dash?.latest_disease ? (
             <div className="space-y-3">
-              <div className={`p-3 rounded-xl text-sm font-semibold ${
-                dash.latest_disease.severity === 'critical' ? 'bg-red-50 text-red-700' :
-                dash.latest_disease.severity === 'high'     ? 'bg-orange-50 text-orange-700' : 'bg-agri-50 text-agri-700'}`}>
+              <div className={`p-3 rounded-xl text-sm font-semibold ${dash.latest_disease.severity === 'critical' ? 'bg-red-50 text-red-700' :
+                  dash.latest_disease.severity === 'high' ? 'bg-orange-50 text-orange-700' : 'bg-agri-50 text-agri-700'}`}>
                 {dash.latest_disease.disease_name}
               </div>
               <div className="text-xs text-gray-500 space-y-1">
