@@ -42,7 +42,7 @@ router.post('/signup', [
     });
   } catch (err) {
     console.error('[SIGNUP ERROR]', err);
-    res.status(500).json({ error: 'Failed to create account', details: err.message });
+    res.status(500).json({ error: 'Failed to create account' });
   }
 });
 
