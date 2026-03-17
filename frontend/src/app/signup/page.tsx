@@ -1,6 +1,6 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
+
 
 import {
   useState,
@@ -14,7 +14,8 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff, Loader, Phone, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { AxiosError } from 'axios';
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
+import { type CredentialResponse } from '@react-oauth/google';
+import ClientGoogleLogin from '@/components/ClientGoogleLogin';
 import { authAPI } from '@/lib/api';
 
 // ---------------------------------------------------------------------------
@@ -269,13 +270,10 @@ export default function SignupPage() {
         <div className="bg-white rounded-3xl shadow-2xl border border-agri-100 p-8">
           {/* Google Sign-Up */}
           <div className="flex justify-center mb-4">
-            <GoogleLogin
+            <ClientGoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => toast.error('Google sign-up failed')}
-              theme="outline"
-              size="large"
               text="signup_with"
-              shape="rectangular"
               width="400"
             />
           </div>

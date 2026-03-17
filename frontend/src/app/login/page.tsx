@@ -1,6 +1,6 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
+
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,7 +9,8 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff, Loader } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { AxiosError } from 'axios';
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
+import { type CredentialResponse } from '@react-oauth/google';
+import ClientGoogleLogin from '@/components/ClientGoogleLogin';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -110,13 +111,10 @@ export default function LoginPage() {
 
           {/* Google Sign-In */}
           <div className="flex justify-center mb-4">
-            <GoogleLogin
+            <ClientGoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => toast.error('Google sign-in failed')}
-              theme="outline"
-              size="large"
               text="signin_with"
-              shape="rectangular"
               width="350"
             />
           </div>
