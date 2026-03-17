@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/lib/AuthContext';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { GoogleAuthWrapper } from '@/lib/GoogleAuthWrapper';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Load Inter via next/font — avoids external <link> tags that can fail CSP on Vercel
 const inter = Inter({
@@ -29,7 +30,9 @@ export default function RootLayout({
         <QueryProvider>
           <GoogleAuthWrapper>
           <AuthProvider>
+            <ErrorBoundary>
             {children}
+            </ErrorBoundary>
 
             <Toaster
               position="bottom-right"

@@ -1,7 +1,5 @@
 'use client';
 
-
-
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -9,7 +7,6 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff, Loader } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { AxiosError } from 'axios';
-import { type CredentialResponse } from '@react-oauth/google';
 import ClientGoogleLogin from '@/components/ClientGoogleLogin';
 
 // ---------------------------------------------------------------------------
@@ -28,7 +25,7 @@ function getErrorMessage(err: unknown): string {
 
 const inputCls =
   'w-full px-4 py-3 rounded-xl border border-agri-200 bg-white text-sm ' +
-  'text-gray-800 placeholder-gray-300 ' +
+  'text-gray-900 placeholder-gray-400 ' +
   'focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400 ' +
   'transition-colors duration-150';
 
@@ -68,15 +65,11 @@ export default function LoginPage() {
     }
   };
 
-  // Google Login handler
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
-    if (!credentialResponse.credential) {
-      toast.error('Google login failed. No credential received.');
-      return;
-    }
+  // Google Login handler — receives access_token string
+  const handleGoogleSuccess = async (credential: string) => {
     setLoading(true);
     try {
-      await googleLogin(credentialResponse.credential);
+      await googleLogin(credential);
       toast.success('Welcome back! 🌱');
       router.push('/dashboard');
     } catch (err: unknown) {
@@ -100,29 +93,28 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-agri-600 rounded-2xl text-3xl mb-4 shadow-lg select-none">
             🌱
           </div>
-          <h1 className="text-3xl font-extrabold text-agri-700">AgriDrishti</h1>
-          <p className="text-gray-400 mt-1 text-sm">Smart Farming System</p>
+          <h1 className="text-3xl font-extrabold text-agri-800">AgriDrishti</h1>
+          <p className="text-gray-500 mt-1 text-sm">Smart Farming System</p>
         </div>
 
         {/* Card */}
         <div className="bg-white rounded-3xl shadow-2xl border border-agri-100 p-8">
-          <h2 className="text-xl font-bold text-agri-700 mb-1">Welcome back</h2>
-          <p className="text-sm text-gray-400 mb-6">Sign in to your farm dashboard</p>
+          <h2 className="text-xl font-bold text-agri-800 mb-1">Welcome back</h2>
+          <p className="text-sm text-gray-500 mb-6">Sign in to your farm dashboard</p>
 
           {/* Google Sign-In */}
-          <div className="flex justify-center mb-4">
+          <div className="mb-4">
             <ClientGoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => toast.error('Google sign-in failed')}
-              text="signin_with"
-              width="350"
+              text="Sign in with Google"
             />
           </div>
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-5">
             <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">or sign in with email</span>
+            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">or sign in with email</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
@@ -131,7 +123,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="login-email"
-                className="block text-sm font-semibold text-agri-700 mb-1.5"
+                className="block text-sm font-semibold text-gray-800 mb-1.5"
               >
                 Email
               </label>
@@ -151,7 +143,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="login-password"
-                className="block text-sm font-semibold text-agri-700 mb-1.5"
+                className="block text-sm font-semibold text-gray-800 mb-1.5"
               >
                 Password
               </label>
@@ -170,7 +162,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={toggleShowPw}
                   aria-label={showPw ? 'Hide password' : 'Show password'}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
                 >
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -198,7 +190,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-400">
+          <p className="mt-6 text-center text-sm text-gray-500">
             Don&apos;t have an account?{' '}
             <Link
               href="/signup"
@@ -209,7 +201,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <p className="text-center text-xs text-gray-300 mt-6">
+        <p className="text-center text-xs text-gray-400 mt-6">
           AgriDrishti · Smart IoT Farming Platform
         </p>
       </div>

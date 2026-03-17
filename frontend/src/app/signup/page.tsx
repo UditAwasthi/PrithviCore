@@ -1,7 +1,5 @@
 'use client';
 
-
-
 import {
   useState,
   useCallback,
@@ -14,7 +12,6 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff, Loader, Phone, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { AxiosError } from 'axios';
-import { type CredentialResponse } from '@react-oauth/google';
 import ClientGoogleLogin from '@/components/ClientGoogleLogin';
 import { authAPI } from '@/lib/api';
 
@@ -35,7 +32,7 @@ function getErrorMessage(err: unknown): string {
 // ---------------------------------------------------------------------------
 const inputCls =
   'w-full px-4 py-2.5 rounded-xl border border-agri-200 bg-white text-sm ' +
-  'text-gray-800 placeholder-gray-300 ' +
+  'text-gray-900 placeholder-gray-400 ' +
   'focus:outline-none focus:ring-2 focus:ring-agri-300 focus:border-agri-400 ' +
   'transition-colors duration-150';
 
@@ -69,7 +66,7 @@ function FormField({
 }: FormFieldProps) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-semibold text-agri-700 mb-1.5">
+      <label htmlFor={id} className="block text-sm font-semibold text-gray-800 mb-1.5">
         {label}
         {required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
@@ -140,7 +137,6 @@ export default function SignupPage() {
     (field: keyof FormState) =>
       (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setForm((prev) => ({ ...prev, [field]: e.target.value }));
-        // Reset phone verified status if phone number changes
         if (field === 'phone') setPhoneVerified(false);
       },
     []
@@ -168,8 +164,6 @@ export default function SignupPage() {
     }
   };
 
-  // Verify OTP — note: this needs the user to be signed up already,
-  // but we handle it after account creation for simplicity
   const handleVerifyOtp = async () => {
     if (otpValue.length !== 6) {
       toast.error('Please enter a 6-digit OTP.');
@@ -188,15 +182,11 @@ export default function SignupPage() {
     }
   };
 
-  // Google Login handler
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
-    if (!credentialResponse.credential) {
-      toast.error('Google sign-up failed. No credential received.');
-      return;
-    }
+  // Google Login handler — receives access_token string
+  const handleGoogleSuccess = async (credential: string) => {
     setLoading(true);
     try {
-      await googleLogin(credentialResponse.credential);
+      await googleLogin(credential);
       toast.success('Account created! Welcome to AgriDrishti 🌱');
       router.push('/dashboard');
     } catch (err: unknown) {
@@ -259,29 +249,28 @@ export default function SignupPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 bg-agri-600 rounded-2xl text-2xl mb-3 shadow-lg select-none">
             🌱
           </div>
-          <h1 className="text-2xl font-extrabold text-agri-700">
+          <h1 className="text-2xl font-extrabold text-agri-800">
             Create your farm account
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-gray-500 mt-1">
             Start monitoring your farm with real-time IoT data
           </p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl border border-agri-100 p-8">
           {/* Google Sign-Up */}
-          <div className="flex justify-center mb-4">
+          <div className="mb-4">
             <ClientGoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => toast.error('Google sign-up failed')}
-              text="signup_with"
-              width="400"
+              text="Sign up with Google"
             />
           </div>
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-5">
             <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">or sign up with email</span>
+            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">or sign up with email</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
@@ -299,7 +288,7 @@ export default function SignupPage() {
               />
               {/* Phone with OTP verify button */}
               <div>
-                <label htmlFor="signup-phone" className="block text-sm font-semibold text-agri-700 mb-1.5">
+                <label htmlFor="signup-phone" className="block text-sm font-semibold text-gray-800 mb-1.5">
                   Phone
                 </label>
                 <div className="flex gap-2">
@@ -360,7 +349,7 @@ export default function SignupPage() {
                     type="button"
                     onClick={toggleShowPw}
                     aria-label={showPw ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
                   >
                     {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
@@ -380,7 +369,7 @@ export default function SignupPage() {
 
             {/* ── Farm details ─────────────────────────────────────── */}
             <div className="border-t border-agri-100 pt-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
                 Farm Details (optional)
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -414,7 +403,7 @@ export default function SignupPage() {
                 <div>
                   <label
                     htmlFor="signup-country"
-                    className="block text-sm font-semibold text-agri-700 mb-1.5"
+                    className="block text-sm font-semibold text-gray-800 mb-1.5"
                   >
                     Country
                   </label>
@@ -462,7 +451,7 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-sm text-gray-400">
+          <p className="mt-5 text-center text-sm text-gray-500">
             Already have an account?{' '}
             <Link href="/login" className="text-agri-600 font-bold hover:underline">
               Sign in
@@ -479,11 +468,11 @@ export default function SignupPage() {
               <div className="inline-flex items-center justify-center w-14 h-14 bg-agri-100 rounded-2xl text-2xl mb-3">
                 📱
               </div>
-              <h3 className="text-xl font-bold text-agri-700">Verify your phone</h3>
-              <p className="text-sm text-gray-400 mt-1">
-                Enter the 6-digit OTP sent to <strong className="text-gray-600">{form.phone}</strong>
+              <h3 className="text-xl font-bold text-agri-800">Verify your phone</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Enter the 6-digit OTP sent to <strong className="text-gray-700">{form.phone}</strong>
               </p>
-              <p className="text-xs text-amber-600 mt-2 bg-amber-50 rounded-lg px-3 py-1.5 inline-block">
+              <p className="text-xs text-amber-700 mt-2 bg-amber-50 rounded-lg px-3 py-1.5 inline-block">
                 💡 Mock mode: Check your backend console for the OTP
               </p>
             </div>
@@ -502,7 +491,7 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => setShowOtpModal(false)}
-                className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+                className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>

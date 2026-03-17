@@ -138,17 +138,36 @@ router.post('/google', [
   const { credential } = req.body;
 
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
-      return res.status(400).json({ error: 'Invalid Google token' });
-    }
+    let email, name, googleId, picture;
 
-    const { email, name, sub: googleId, picture } = payload;
+    // Try verifying as ID token first, then fall back to access token
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email) {
+        return res.status(400).json({ error: 'Invalid Google token' });
+      }
+      email = payload.email;
+      name = payload.name;
+      googleId = payload.sub;
+      picture = payload.picture;
+    } catch {
+      // Treat credential as an access_token and fetch user info from Google
+      const axios = require('axios');
+      const { data: userInfo } = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${credential}` },
+      });
+      if (!userInfo || !userInfo.email) {
+        return res.status(400).json({ error: 'Invalid Google token' });
+      }
+      email = userInfo.email;
+      name = userInfo.name;
+      googleId = userInfo.sub;
+      picture = userInfo.picture;
+    }
 
     let user = await User.findOne({ email });
 
