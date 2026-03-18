@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Droplets, Sprout, ShieldCheck, BarChart3, Users, Factory, ArrowRight, Activity, Leaf, ChevronRight, CheckCircle2 } from 'lucide-react';
@@ -80,45 +81,8 @@ function HeroSection() {
         initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }}
         className="mt-20 relative w-full max-w-5xl mx-auto"
       >
-         <div className="relative rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-2xl p-4 shadow-2xl overflow-hidden min-h-[400px]">
-           <div className="absolute top-0 left-0 w-full h-12 bg-muted/40 border-b border-border/50 flex items-center px-6 gap-2">
-             <div className="w-3 h-3 rounded-full bg-destructive/60" />
-             <div className="w-3 h-3 rounded-full bg-amber-500/60" />
-             <div className="w-3 h-3 rounded-full bg-green-500/60" />
-           </div>
-           
-           <div className="p-8 pt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-             {/* Fake Sidebar */}
-             <div className="hidden md:block col-span-1 space-y-4">
-               <div className="h-8 w-3/4 bg-primary/10 rounded-lg" />
-               <div className="h-4 w-1/2 bg-muted rounded-md" />
-               <div className="h-4 w-2/3 bg-muted rounded-md" />
-               <div className="h-4 w-3/4 bg-muted rounded-md" />
-               <div className="h-4 w-1/2 bg-muted rounded-md" />
-             </div>
-             {/* Fake Content */}
-             <div className="col-span-2 space-y-6">
-               <div className="flex gap-4">
-                 <div className="h-24 flex-1 bg-background rounded-2xl border border-border shadow-sm flex flex-col justify-center px-6">
-                   <div className="w-8 h-8 rounded-full bg-blue-500/20 mb-3" />
-                   <div className="w-16 h-4 bg-muted-foreground/30 rounded" />
-                 </div>
-                 <div className="h-24 flex-1 bg-background rounded-2xl border border-border shadow-sm flex flex-col justify-center px-6">
-                   <div className="w-8 h-8 rounded-full bg-primary/20 mb-3" />
-                   <div className="w-16 h-4 bg-muted-foreground/30 rounded" />
-                 </div>
-               </div>
-               <div className="h-48 w-full bg-background rounded-2xl border border-border shadow-sm p-6 overflow-hidden relative">
-                 <div className="w-32 h-4 bg-muted rounded-md mb-6" />
-                 <div className="w-full h-full border-b border-l border-muted relative">
-                   <svg className="absolute w-full h-full top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100">
-                     <path d="M0,80 L20,60 L40,75 L60,40 L80,50 L100,20" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary/50" />
-                     <path d="M0,80 L20,60 L40,75 L60,40 L80,50 L100,20 L100,100 L0,100 Z" fill="currentColor" className="text-primary/10" />
-                   </svg>
-                 </div>
-               </div>
-             </div>
-           </div>
+         <div className="relative rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-2xl p-2 md:p-4 shadow-2xl overflow-hidden">
+           <Image src="/hero-mockup.png" alt="PrithviCore Dashboard Mockup" width={1600} height={900} className="rounded-xl border border-border/50 shadow-inner w-full h-auto object-cover" priority />
          </div>
          
          {/* Floating Elements */}
