@@ -6,10 +6,9 @@ import { dashboardAPI, weatherAPI } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import AppLayout from '@/components/layout/AppLayout';
-import SensorCard from '@/components/ui/SensorCard';
 import { SoilTrendChart, NPKChart } from '@/components/charts/SoilChart';
 import { formatDistanceToNow, format } from 'date-fns';
-import { Droplets, Wind, Bug, Lightbulb, RefreshCw, Cloud, Activity, Users, Settings, Database, Server } from 'lucide-react';
+import { Search, Plus, Bell, MoreHorizontal, CheckCircle2, Cloud, Droplets, Thermometer, FlaskConical, Wind } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -18,29 +17,25 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
+// --- Types ---
 interface SensorReading { moisture: number; temperature: number; humidity: number; ph: number; nitrogen: number; phosphorus: number; potassium: number; timestamp: string; }
 interface Recommendation { id: string; icon: string; title: string; action: string; priority: string; }
 interface DiseaseResult { disease_name: string; severity: string; confidence: number; treatment: string; }
 interface DashboardData { latest_reading: SensorReading | null; weekly_trend: Record<string, number | string>[]; recommendations: Recommendation[]; latest_disease: DiseaseResult | null; }
 interface WeatherCurrent { temperature: number; description: string; humidity: number; wind_speed: number; icon: string; city: string; }
 
-function moistureStatus(v: number) { if (v < 20) return { status: 'danger' as const, statusLabel: 'Critical Low' }; if (v < 35) return { status: 'warning' as const, statusLabel: 'Low' }; if (v > 70) return { status: 'warning' as const, statusLabel: 'Waterlogged' }; return { status: 'optimal' as const, statusLabel: 'Optimal' }; }
-function tempStatus(v: number) { if (v > 35) return { status: 'danger' as const, statusLabel: 'Heat Stress' }; if (v < 10) return { status: 'warning' as const, statusLabel: 'Cold Risk' }; return { status: 'optimal' as const, statusLabel: 'Normal' }; }
-function phStatus(v: number) { if (v < 5.5 || v > 8.0) return { status: 'danger' as const, statusLabel: v < 5.5 ? 'Acidic' : 'Alkaline' }; if (v < 6.0 || v > 7.5) return { status: 'warning' as const, statusLabel: 'Marginal' }; return { status: 'optimal' as const, statusLabel: 'Optimal' }; }
-function npkStatus(v: number, low: number) { if (v < low) return { status: 'danger' as const, statusLabel: 'Low' }; if (v < low * 1.3) return { status: 'warning' as const, statusLabel: 'Marginal' }; return { status: 'optimal' as const, statusLabel: 'Good' }; }
-
+// --- Dummy Activity Log (Mapped to reference image 'Recent Activity') ---
 const ACTIVITY_LOG = [
-  { id: 1, type: 'sensor', msg: 'ESP32 Node 1 reconnected', time: '5m ago', icon: Server },
-  { id: 2, type: 'alert', msg: 'Auto-irrigation initiated (Zone B)', time: '12m ago', icon: Droplets },
-  { id: 3, type: 'team', msg: 'Rohan added a new disease record', time: '1h ago', icon: Users },
-  { id: 4, type: 'system', msg: 'Weekly backup completed', time: '3h ago', icon: Database },
+  { id: 1, user: 'Sarah Lee', action: 'Adjusted irrigation in Zone A', time: '10m ago', avatar: 'S' },
+  { id: 2, user: 'Daniel Kim', action: 'Added new NPK records', time: '1h ago', avatar: 'D' },
+  { id: 3, user: 'System', action: 'Automated pest scan completed', time: '3h ago', avatar: '⚙️' },
 ];
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  const { data: dash, isLoading, error, dataUpdatedAt } = useQuery<DashboardData>(
+  const { data: dash, isLoading, error } = useQuery<DashboardData>(
     'dashboard',
     () => dashboardAPI.get().then((r) => r.data as DashboardData),
     { refetchInterval: 60_000 }
@@ -70,153 +65,223 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
-            Good {new Date().getHours() < 12 ? 'morning' : 'afternoon'},{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-green-400 drop-shadow-sm">{user?.name?.split(' ')[0] ?? 'Farmer'}</span> 👋
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm font-medium flex items-center gap-2">
-            {user?.farm_location?.city ? `📍 ${user.farm_location.city}, ${user.farm_location.state ?? ''}` : 'Farm overview'}
-            <span className="text-border px-1">•</span> {format(new Date(), 'EEEE, MMMM d')}
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => qc.invalidateQueries('dashboard')} className="gap-2 font-semibold shadow-sm rounded-xl hover:bg-gradient-to-r hover:from-[#0B3D2E] hover:to-[#14B8A6] hover:text-white border-border/50 hover:border-transparent transition-all" disabled={isLoading}>
-            <RefreshCw size={16} className={cn(isLoading && "animate-spin")} /> Refresh
+      {/* Top Header Row matching mockup */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+          Welcome back, {user?.name?.split(' ')[0] ?? 'Alex'}!
+        </h1>
+        
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search..." 
+              className="pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-48 md:w-64 shadow-sm"
+            />
+          </div>
+          <Button variant="outline" className="gap-2 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm text-gray-700 dark:text-gray-200 hidden sm:flex">
+            <Plus size={16} /> Add Widget
+          </Button>
+          <Button variant="outline" size="icon" className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm text-gray-700 dark:text-gray-200">
+            <Bell size={18} />
           </Button>
         </div>
       </div>
 
       {!!error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 mb-8 text-destructive text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
-          ⚠️ Could not load sensor data. Make sure the backend is running and your IoT device is connected.
+        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 mb-8 text-destructive text-sm font-medium flex items-center gap-2">
+          ⚠️ Could not load sensor data. Connect your IoT device.
         </div>
       )}
 
-      {dataUpdatedAt > 0 && (
-        <p className="text-[11px] uppercase tracking-widest text-muted-foreground mb-4 font-bold flex items-center gap-2">
-          <span>Last sync: {formatDistanceToNow(dataUpdatedAt, { addSuffix: true })}</span>
-          {s?.timestamp && (
-            <>
-              <span className="w-1 h-1 rounded-full bg-border" />
-              <span>Sensor record: {formatDistanceToNow(new Date(s.timestamp), { addSuffix: true })}</span>
-            </>
-          )}
-        </p>
-      )}
-
-      <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-6 lg:space-y-8">
+      <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-6">
         
-        {/* Core Sensors */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-          {[
-            { label: "Soil Moisture", value: s?.moisture, unit: "%", icon: "💧", ...s ? moistureStatus(s.moisture) : { status: 'info' as const } },
-            { label: "Temperature", value: s?.temperature, unit: "°C", icon: "🌡️", ...s ? tempStatus(s.temperature) : { status: 'info' as const } },
-            { label: "Humidity", value: s?.humidity, unit: "%", icon: "🌫️", status: s ? (s.humidity > 85 ? 'warning' as const : 'info' as const) : 'info' as const, statusLabel: s ? (s.humidity > 85 ? 'High' : 'Normal') : undefined },
-            { label: "Soil pH", value: s?.ph, unit: "pH", icon: "🧪", ...s ? phStatus(s.ph) : { status: 'info' as const } }
-          ].map((sensor, i) => (
-            <motion.div key={i} variants={itemVariants}>
-               <SensorCard {...sensor} loading={isLoading} />
-            </motion.div>
-          ))}
-        </div>
-
-        {/* NPK Sensors */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           {[
-             { label: "Nitrogen (N)", val: s?.nitrogen, unit: "mg/kg", icon: "🌿", ...s ? npkStatus(s.nitrogen, 50) : { status: 'info' as const, statusLabel: undefined } },
-             { label: "Phosphorus (P)", val: s?.phosphorus, unit: "mg/kg", icon: "🌾", ...s ? npkStatus(s.phosphorus, 25) : { status: 'info' as const, statusLabel: undefined } },
-             { label: "Potassium (K)", val: s?.potassium, unit: "mg/kg", icon: "🍂", ...s ? npkStatus(s.potassium, 30) : { status: 'info' as const, statusLabel: undefined } },
-           ].map((npk, i) => (
-             <motion.div key={i} variants={itemVariants}>
-               <SensorCard label={npk.label} value={npk.val} unit={npk.unit} icon={npk.icon} loading={isLoading} status={npk.status} statusLabel={npk.statusLabel} />
-             </motion.div>
-           ))}
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <motion.div variants={itemVariants} className="xl:col-span-2 space-y-6">
-            <Card className="shadow-sm overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/3" />
-              <CardHeader className="pb-2 border-b border-border/30">
-                <CardTitle className="text-lg flex items-center gap-2"><Activity size={18} className="text-primary" /> Multi-Layer Soil Insights</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">7-Day Condition Trend</h4>
-                    {isLoading ? <Skeleton className="h-[220px] w-full" /> : wkly.length > 0 ? <SoilTrendChart data={wkly} height={220} /> : <EmptyChart message="Sensor history graph goes here" />}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Nutrient Flow (NPK)</h4>
-                    {isLoading ? <Skeleton className="h-[220px] w-full" /> : wkly.length > 0 ? <NPKChart data={wkly} height={220} /> : <EmptyChart message="NPK history graph goes here" />}
-                  </div>
+        {/* KPI Row (4 standard cards with mini area charts) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          {/* Soil Moisture */}
+          <motion.div variants={itemVariants}>
+            <Card className="shadow-sm border-gray-100 dark:border-border/50 bg-white dark:bg-card overflow-hidden h-full flex flex-col justify-between">
+              <div className="p-5 pb-0">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Soil Moisture</span>
+                  <Droplets size={16} className="text-gray-400" />
                 </div>
+                {isLoading ? <Skeleton className="h-10 w-24" /> : (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">{s?.moisture?.toFixed(1) ?? '—'}</span>
+                    <span className="text-sm font-medium text-gray-500">%</span>
+                  </div>
+                )}
+              </div>
+              <div className="h-16 w-full mt-4">
+                <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 40">
+                  <path d="M0,40 L0,30 C20,25 30,10 50,20 C70,30 80,5 100,10 L100,40 Z" fill="rgba(34,197,94,0.1)" />
+                  <path d="M0,30 C20,25 30,10 50,20 C70,30 80,5 100,10" fill="none" stroke="rgba(34,197,94,0.5)" strokeWidth="2" />
+                </svg>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Temperature / Weather */}
+          <motion.div variants={itemVariants}>
+            <Card className="shadow-sm border-gray-100 dark:border-border/50 bg-white dark:bg-card overflow-hidden h-full flex flex-col justify-between">
+              <div className="p-5 pb-0">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Temperature</span>
+                  <Thermometer size={16} className="text-gray-400" />
+                </div>
+                {isLoading ? <Skeleton className="h-10 w-24" /> : (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">{s?.temperature?.toFixed(1) ?? weatherData?.current?.temperature?.toFixed(1) ?? '—'}</span>
+                    <span className="text-sm font-medium text-gray-500">°C</span>
+                  </div>
+                )}
+              </div>
+              <div className="p-5 pt-2 grid grid-cols-3 gap-2 mt-2">
+                {/* Dummy weather forecast icons replicating the visual density of the mockup */}
+                {[...Array(6)].map((_, i) => (
+                   <div key={i} className="flex flex-col items-center justify-center gap-1">
+                     <Cloud size={14} className={i % 2 === 0 ? "text-primary/70" : "text-blue-400/70"} />
+                     <span className="text-[9px] text-gray-400 font-semibold">{format(Date.now() + i*86400000, 'EEE')}</span>
+                   </div>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Soil pH */}
+          <motion.div variants={itemVariants}>
+            <Card className="shadow-sm border-gray-100 dark:border-border/50 bg-white dark:bg-card overflow-hidden h-full flex flex-col justify-between">
+              <div className="p-5 pb-0">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Soil pH</span>
+                  <FlaskConical size={16} className="text-gray-400" />
+                </div>
+                {isLoading ? <Skeleton className="h-10 w-24" /> : (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">{s?.ph?.toFixed(2) ?? '—'}</span>
+                    <span className="text-sm font-medium text-gray-500">Index</span>
+                  </div>
+                )}
+              </div>
+              <div className="h-16 w-full mt-4">
+                <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 40">
+                  <path d="M0,40 L0,20 C30,30 40,5 60,15 C80,25 90,5 100,10 L100,40 Z" fill="rgba(34,197,94,0.1)" />
+                  <path d="M0,20 C30,30 40,5 60,15 C80,25 90,5 100,10" fill="none" stroke="rgba(34,197,94,0.5)" strokeWidth="2" strokeDasharray="4 2"/>
+                </svg>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Crop Yield / Humidity */}
+          <motion.div variants={itemVariants}>
+            <Card className="shadow-sm border-gray-100 dark:border-border/50 bg-white dark:bg-card overflow-hidden h-full flex flex-col justify-between">
+              <div className="p-5 pb-0">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">Humidity</span>
+                  <Wind size={16} className="text-gray-400" />
+                </div>
+                {isLoading ? <Skeleton className="h-10 w-24" /> : (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">{s?.humidity?.toFixed(1) ?? '—'}</span>
+                    <span className="text-sm font-medium text-gray-500">%</span>
+                  </div>
+                )}
+              </div>
+              <div className="h-16 w-full mt-4">
+                <svg className="w-full h-full transform -scale-x-100" preserveAspectRatio="none" viewBox="0 0 100 40">
+                  <path d="M0,40 L0,30 C20,25 30,10 50,20 C70,30 80,5 100,10 L100,40 Z" fill="rgba(34,197,94,0.1)" />
+                  <path d="M0,30 C20,25 30,10 50,20 C70,30 80,5 100,10" fill="none" stroke="rgba(34,197,94,0.5)" strokeWidth="2" />
+                </svg>
+              </div>
+            </Card>
+          </motion.div>
+
+        </div>
+
+        {/* Middle Row (Charts)  */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div variants={itemVariants} className="lg:col-span-2">
+            <Card className="shadow-sm border-gray-100 dark:border-border/50 bg-white dark:bg-card h-full">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">Trend Overview</CardTitle>
+                <select className="bg-transparent text-sm font-semibold text-gray-500 outline-none border-none cursor-pointer">
+                  <option>Last 7 Days</option>
+                  <option>Last 30 Days</option>
+                </select>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {isLoading ? <Skeleton className="h-[250px] w-full" /> : wkly.length > 0 ? <SoilTrendChart data={wkly} height={250} /> : (
+                  <div className="h-[250px] w-full bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed flex items-center justify-center text-gray-400 text-sm">No historical data</div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Right sidebar insights */}
-          <motion.div variants={itemVariants} className="space-y-6">
-             <WeatherCard current={weatherData?.current} />
-             
-             {/* Dynamic Activity Feed */}
-             <Card className="shadow-sm">
-               <CardHeader className="pb-3 border-b border-border/30">
-                 <CardTitle className="text-base font-bold flex items-center gap-2"><Activity size={16} className="text-blue-500" /> Farm Activity Feed</CardTitle>
-               </CardHeader>
-               <CardContent className="pt-4 p-0">
-                 <div className="divide-y divide-border/50 max-h-[220px] overflow-y-auto custom-scrollbar">
-                   {ACTIVITY_LOG.map((log) => (
-                     <div key={log.id} className="p-4 flex gap-3 hover:bg-muted/30 transition-colors group">
-                       <div className="mt-0.5"><log.icon size={16} className="text-muted-foreground group-hover:text-primary transition-colors" /></div>
-                       <div>
-                         <p className="text-sm font-medium text-foreground">{log.msg}</p>
-                         <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mt-1">{log.time}</p>
-                       </div>
-                     </div>
-                   ))}
+          <motion.div variants={itemVariants}>
+            <Card className="shadow-sm border-gray-100 dark:border-border/50 bg-white dark:bg-card h-full">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">NPK Distribution</CardTitle>
+                <MoreHorizontal size={18} className="text-gray-400 cursor-pointer" />
+              </CardHeader>
+              <CardContent className="pt-4 flex flex-col items-center">
+                 {/* CSS Donut Chart replicating the mockup visual mapping to our NPK data*/}
+                 <div className="relative w-48 h-48 mt-4 flex items-center justify-center">
+                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                      {/* Base circle background */}
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#f1f5f9" strokeWidth="20" className="dark:stroke-gray-800" />
+                      {/* N (Nitrogen) Segment */}
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#22c55e" strokeWidth="20" strokeDasharray={`${(s?.nitrogen ?? 33)/100 * 251} 251`} className="transition-all duration-1000"/>
+                      {/* P (Phosphorus) Segment */}
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#3b82f6" strokeWidth="20" strokeDasharray={`${(s?.phosphorus ?? 33)/100 * 251} 251`} strokeDashoffset={`-${(s?.nitrogen ?? 33)/100 * 251}`} className="transition-all duration-1000" />
+                      {/* K (Potassium) Segment */}
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#a855f7" strokeWidth="20" strokeDasharray={`${(s?.potassium ?? 33)/100 * 251} 251`} strokeDashoffset={`-${((s?.nitrogen ?? 33) + (s?.phosphorus ?? 33))/100 * 251}`} className="transition-all duration-1000" />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-2xl font-black text-gray-900 dark:text-white">{Math.round((s?.nitrogen ?? 0) + (s?.phosphorus ?? 0) + (s?.potassium ?? 0))}</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total NPK</span>
+                    </div>
                  </div>
-               </CardContent>
-             </Card>
+                 
+                 <div className="w-full mt-8 flex justify-center gap-6">
+                   <div className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300"><div className="w-3 h-3 rounded-full bg-[#22c55e]"/> N</div>
+                   <div className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300"><div className="w-3 h-3 rounded-full bg-[#3b82f6]"/> P</div>
+                   <div className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300"><div className="w-3 h-3 rounded-full bg-[#a855f7]"/> K</div>
+                 </div>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
 
-        {/* Lower row: Recs and Disease */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bottom Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
+          {/* Tasks Overview (Recommendations) */}
           <motion.div variants={itemVariants}>
-            <Card className="shadow-sm h-full">
-              <CardHeader className="pb-4 flex flex-row items-center justify-between space-y-0 border-b border-border/30">
-                <CardTitle className="text-base flex items-center gap-2 font-bold"><Lightbulb size={18} className="text-amber-500" /> AI Recommendations</CardTitle>
-                <Link href="/recommendations" className="text-xs text-primary hover:underline font-bold px-3 py-1 rounded-full bg-primary/10 transition-colors hover:bg-primary hover:text-white">View AI Module</Link>
+            <Card className="shadow-sm border-gray-100 dark:border-border/50 bg-white dark:bg-card h-full">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">Task Overview</CardTitle>
+                <span className="text-sm font-semibold text-primary cursor-pointer hover:underline">View All</span>
               </CardHeader>
-              <CardContent className="pt-5">
-                <div className="space-y-3">
-                  {isLoading ? (
-                    <><Skeleton className="h-[75px] w-full rounded-xl" /><Skeleton className="h-[75px] w-full rounded-xl" /></>
-                  ) : recs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/20 rounded-xl border border-dashed border-border/60">
-                      <Lightbulb size={32} className="text-muted-foreground/50 mb-3" />
-                      <span className="text-sm font-semibold text-foreground">Awaiting telemetry data</span>
-                      <span className="text-xs text-muted-foreground mt-1">AI will formulate recommendations soon</span>
-                    </div>
-                  ) : recs.slice(0, 3).map((r) => (
-                    <div key={r.id} className={cn("flex gap-3.5 p-4 rounded-xl border transition-all hover:shadow-md hover:-translate-y-0.5",
-                      r.priority === 'critical' ? 'bg-destructive/5 border-destructive/20 hover:border-destructive/40' : 
-                      r.priority === 'high' ? 'bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40' : 
-                      'bg-primary/5 border-primary/20 hover:border-primary/40'
-                    )}>
-                      <div className="text-2xl mt-0.5 bg-background p-2 rounded-lg shadow-sm border border-border/50 h-fit">{r.icon}</div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <p className="font-bold text-foreground text-sm">{r.title}</p>
-                          <span className={cn("text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
-                            r.priority === 'critical' ? 'bg-destructive text-destructive-foreground' : 
-                            r.priority === 'high' ? 'bg-orange-500 text-white' : 'bg-primary/20 text-primary'  
-                          )}>{r.priority}</span>
+              <CardContent className="pt-2">
+                <div className="space-y-4">
+                  {isLoading ? <Skeleton className="h-16 w-full rounded-xl" /> : recs.length === 0 ? (
+                    <div className="text-center py-6 text-gray-500 text-sm">No pending tasks.</div>
+                  ) : recs.slice(0, 4).map((r) => (
+                    <div key={r.id} className="flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent dark:border-border/50">
+                      <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center text-xl shrink-0">
+                        {r.icon || '📝'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{r.title}</p>
+                        <p className="text-xs text-gray-500 truncate">{r.action}</p>
+                      </div>
+                      <div className="flex items-center gap-2 mr-2">
+                        <div className="px-2.5 py-1 bg-white dark:bg-gray-700 shadow-sm rounded border border-gray-200 dark:border-gray-600 text-xs font-bold text-gray-600 dark:text-gray-300">
+                          Todo
                         </div>
-                        <p className="text-muted-foreground text-xs leading-relaxed font-medium">{r.action}</p>
+                        <CheckCircle2 size={18} className="text-gray-300 hover:text-green-500 cursor-pointer transition-colors" />
                       </div>
                     </div>
                   ))}
@@ -225,45 +290,30 @@ export default function DashboardPage() {
             </Card>
           </motion.div>
 
+          {/* Recent Activity */}
           <motion.div variants={itemVariants}>
-            <Card className="shadow-sm h-full relative overflow-hidden group">
-              <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-green-500/5 rounded-full blur-3xl group-hover:bg-green-500/10 transition-colors" />
-              <CardHeader className="pb-4 flex flex-row items-center justify-between space-y-0 border-b border-border/30 relative z-10">
-                <CardTitle className="text-base flex items-center gap-2 font-bold"><Bug size={18} className="text-destructive" /> Plant Pathology Scans</CardTitle>
-                <Link href="/disease" className="text-xs text-primary hover:underline font-bold px-3 py-1 rounded-full bg-primary/10 transition-colors hover:bg-primary hover:text-white">Run Scan</Link>
+            <Card className="shadow-sm border-gray-100 dark:border-border/50 bg-white dark:bg-card h-full">
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">Recent Activity</CardTitle>
+                <MoreHorizontal size={18} className="text-gray-400 cursor-pointer" />
               </CardHeader>
-              <CardContent className="pt-5 relative z-10">
-                {isLoading ? (
-                   <Skeleton className="h-[180px] w-full rounded-xl" />
-                ) : dash?.latest_disease ? (
-                  <div className="bg-background/80 backdrop-blur-sm rounded-xl p-5 border border-border/50 shadow-sm transition-all hover:shadow-md">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={cn("px-3 py-1.5 rounded-lg text-sm font-black tracking-wide border uppercase", 
-                        dash.latest_disease.severity === 'critical' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                        dash.latest_disease.severity === 'high' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20' : 
-                        'bg-primary/10 text-primary border-primary/20'
-                         )}>
-                        {dash.latest_disease.disease_name}
+              <CardContent className="pt-2">
+                <div className="space-y-4">
+                  {ACTIVITY_LOG.map((log) => (
+                    <div key={log.id} className="flex items-center gap-4 bg-white dark:bg-card p-2 rounded-xl border-b border-gray-50 dark:border-gray-800/50 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-200 dark:border-blue-800">
+                        {log.avatar}
                       </div>
-                      <div className="text-right">
-                         <div className="text-2xl font-black text-foreground">{(dash.latest_disease.confidence * 100).toFixed(0)}%</div>
-                         <div className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Confidence</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{log.user}</p>
+                        <p className="text-xs text-gray-500 truncate">{log.action}</p>
+                      </div>
+                      <div className="text-xs font-semibold text-gray-400">
+                        {log.time}
                       </div>
                     </div>
-                    
-                    <div className="pt-4 border-t border-border/60">
-                      <span className="font-bold text-foreground flex items-center gap-2 mb-2 text-xs uppercase tracking-widest"><Settings size={12}/> Treatment Protocol</span>
-                      <p className="text-sm font-medium leading-relaxed text-muted-foreground bg-muted/40 p-3.5 rounded-xl border border-border/50">{dash.latest_disease.treatment}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="h-full min-h-[180px] flex flex-col items-center justify-center p-6 text-center bg-muted/20 rounded-xl border border-dashed border-border/60">
-                    <div className="text-4xl mb-4 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300">📷</div>
-                    <span className="text-sm font-semibold text-foreground mb-1">No Active Threats Detected</span>
-                    <p className="text-xs text-muted-foreground max-w-[200px] leading-relaxed mb-4">Upload a leaf photo to screen for potential pathogens.</p>
-                    <Link href="/disease"><Button size="sm" className="rounded-full shadow-sm px-6 font-bold hover:shadow-primary/20 hover:shadow-md transition-all">Start Diagnostics</Button></Link>
-                  </div>
-                )}
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </motion.div>
@@ -271,66 +321,5 @@ export default function DashboardPage() {
 
       </motion.div>
     </AppLayout>
-  );
-}
-
-function EmptyChart({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center text-muted-foreground text-sm font-medium gap-3 bg-muted/20 rounded-xl border border-dashed border-border/60 h-full min-h-[220px]">
-      <span className="text-3xl opacity-30 grayscale">📉</span>
-      {message}
-    </div>
-  );
-}
-
-function WeatherCard({ current: c }: { current?: WeatherCurrent }) {
-  return (
-    <Card className="bg-gradient-to-br from-[#1e3a8a] to-[#3b82f6] text-white shadow-lg shadow-blue-500/20 border-0 relative overflow-hidden flex flex-col hover:-translate-y-0.5 transition-transform duration-300">
-      <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none mix-blend-overlay">
-        <Cloud size={160} />
-      </div>
-      <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-      <CardHeader className="pb-0 relative z-10 pt-5">
-        <CardTitle className="text-[10px] flex items-center gap-2 text-white/90 font-black tracking-widest uppercase">
-          <Cloud size={14} /> Current Atmosphere
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4 relative z-10 flex-1 flex flex-col justify-between">
-        {c ? (
-          <>
-            <div>
-              <div className="flex items-center gap-5 mb-4">
-                <div className="bg-white/20 rounded-3xl p-2.5 backdrop-blur-md shadow-inner border border-white/10">
-                  <Image src={`https://openweathermap.org/img/wn/${c.icon}@2x.png`} alt={c.description} width={68} height={68} unoptimized className="drop-shadow-lg" />
-                </div>
-                <div>
-                  <div className="text-5xl font-black tracking-tighter drop-shadow-md">{c.temperature.toFixed(0)}°</div>
-                  <div className="text-base font-bold capitalize text-white/90 drop-shadow-sm mt-1">{c.description}</div>
-                </div>
-              </div>
-              <div className="text-xs font-bold text-white/90 flex items-center gap-2 mt-4 bg-black/10 w-fit px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10 shadow-sm">
-                <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></span>
-                {c.city}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3 mt-6">
-              <div className="bg-black/20 backdrop-blur-md rounded-2xl p-4 border border-white/5 transition-colors hover:bg-black/30">
-                <div className="text-white/70 text-[10px] font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Droplets size={12} className="text-blue-300"/> Humidity</div>
-                <div className="font-black text-xl tracking-tight">{c.humidity}%</div>
-              </div>
-              <div className="bg-black/20 backdrop-blur-md rounded-2xl p-4 border border-white/5 transition-colors hover:bg-black/30">
-                <div className="text-white/70 text-[10px] font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Wind size={12} className="text-teal-300"/> Wind</div>
-                <div className="font-black text-xl tracking-tight">{c.wind_speed} <span className="text-[11px] font-bold text-white/60 lowercase tracking-wider">m/s</span></div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center py-10 text-white/70">
-            <Cloud size={40} className="mb-4 opacity-50" />
-            <p className="text-sm font-semibold leading-relaxed">Configure farm location<br/>to sync local weather</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 }

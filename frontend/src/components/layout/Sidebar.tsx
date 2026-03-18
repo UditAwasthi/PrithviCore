@@ -30,40 +30,42 @@ export default function Sidebar() {
       <Link
         href={href}
         className={cn(
-          'group flex items-center gap-3 px-4 py-3 rounded-xl mx-3 text-[15px] font-semibold transition-all duration-300',
+          'group flex items-center gap-3 px-4 py-3.5 rounded-xl mx-4 text-[14px] font-semibold transition-colors duration-200',
           active
-            ? 'bg-[#22C55E]/15 text-[#22C55E] shadow-[0_0_15px_rgba(34,197,94,0.1)] ring-1 ring-[#22C55E]/20'
-            : 'text-white/70 hover:bg-white/10 hover:text-white'
+            ? 'bg-[#489169] text-white shadow-sm'
+            : 'text-white/80 hover:bg-white/10 hover:text-white'
         )}
       >
-        <Icon size={20} className={cn('flex-shrink-0 transition-colors', active ? 'text-[#22C55E]' : 'text-white/60 group-hover:text-white')} />
+        <Icon size={18} className={cn('flex-shrink-0', active ? 'text-white' : 'text-white/60 group-hover:text-white')} />
         <span className="flex-1 truncate">{label}</span>
       </Link>
     );
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 w-[260px] bg-gradient-to-b from-[#0B3D2E] to-[#06241a] border-r border-white/5 flex-col flex-shrink-0 transition-transform hidden md:flex z-50 shadow-2xl">
+    <aside className="fixed inset-y-0 left-0 w-[260px] bg-[#1B5E3F] border-r border-[#1B5E3F]/10 flex-col flex-shrink-0 hidden md:flex z-50">
       {/* Brand Logo Header */}
-      <div className="h-20 flex items-center px-6 border-b border-white/10">
-        <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#22C55E] to-[#14B8A6] flex items-center justify-center text-xl shadow-lg shadow-[#22C55E]/20 text-white">🌿</div>
-          <span className="text-xl font-bold tracking-tight text-white">PrithviCore</span>
+      <div className="h-24 flex items-center px-6">
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg border-2 border-white flex items-center justify-center text-white font-bold opacity-90"><Leaf size={18} /></div>
+          <span className="text-xl font-bold tracking-tight text-white block">PrithviCore</span>
         </Link>
       </div>
 
       {/* Navigation Links */}
-      <div className="flex-1 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 py-2 space-y-1.5 overflow-y-auto custom-scrollbar">
         {NAV_ITEMS.map(item => (
           <NavItem key={item.href} href={item.href} label={item.label} Icon={item.icon} />
         ))}
       </div>
 
-      {/* Bottom Actions */}
-      <div className="p-4 border-t border-white/10 space-y-1.5 bg-black/10">
-        {BOTTOM_ITEMS.map(item => (
-          <NavItem key={item.href} href={item.href} label={item.label} Icon={item.icon} />
-        ))}
+      {/* Bottom Profile Card */}
+      <div className="p-4 mx-4 mb-6 mt-auto bg-black/20 rounded-xl flex items-center gap-3 hover:bg-black/30 transition-colors cursor-pointer">
+         <img src="https://i.pravatar.cc/150?img=11" alt="Profile" className="w-10 h-10 rounded-full object-cover bg-black/20 border border-white/10 shadow-sm" />
+         <div className="flex flex-col min-w-0">
+            <span className="text-white font-bold text-sm truncate">Alex Johnson</span>
+            <span className="text-white/70 text-xs truncate">Pro Member</span>
+         </div>
       </div>
     </aside>
   );
