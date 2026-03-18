@@ -1,15 +1,15 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { dashboardAPI, weatherAPI } from '@/lib/api';
+import { dashboardAPI } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import AppLayout from '@/components/layout/AppLayout';
 import SensorCard from '@/components/ui/SensorCard';
 import { SoilTrendChart, NPKChart } from '@/components/charts/SoilChart';
 import { formatDistanceToNow, format } from 'date-fns';
-import { Droplets, Wind, Bug, Lightbulb, RefreshCw, Cloud, Activity, Users, Settings, Database, Server } from 'lucide-react';
+import { Droplets, Wind, Bug, Lightbulb, RefreshCw, Cloud, Activity, Settings, MapPin, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -31,16 +31,87 @@ function tempStatus(v: number) { if (v > 35) return { status: 'danger' as const,
 function phStatus(v: number) { if (v < 5.5 || v > 8.0) return { status: 'danger' as const, statusLabel: v < 5.5 ? 'Acidic' : 'Alkaline' }; if (v < 6.0 || v > 7.5) return { status: 'warning' as const, statusLabel: 'Marginal' }; return { status: 'optimal' as const, statusLabel: 'Optimal' }; }
 function npkStatus(v: number, low: number) { if (v < low) return { status: 'danger' as const, statusLabel: 'Low' }; if (v < low * 1.3) return { status: 'warning' as const, statusLabel: 'Marginal' }; return { status: 'optimal' as const, statusLabel: 'Good' }; }
 
-const ACTIVITY_LOG = [
-  { id: 1, type: 'sensor', msg: 'ESP32 Node 1 reconnected', time: '5m ago', icon: Server },
-  { id: 2, type: 'alert', msg: 'Auto-irrigation initiated (Zone B)', time: '12m ago', icon: Droplets },
-  { id: 3, type: 'team', msg: 'Rohan added a new disease record', time: '1h ago', icon: Users },
-  { id: 4, type: 'system', msg: 'Weekly backup completed', time: '3h ago', icon: Database },
-];
+// WMO Weather Code → emoji + description
+const WMO_MAP: Record<number, { emoji: string; desc: string }> = {
+  0: { emoji: '☀️', desc: 'Clear sky' },
+  1: { emoji: '🌤️', desc: 'Mainly clear' },
+  2: { emoji: '⛅', desc: 'Partly cloudy' },
+  3: { emoji: '☁️', desc: 'Overcast' },
+  45: { emoji: '🌫️', desc: 'Foggy' },
+  48: { emoji: '🌫️', desc: 'Depositing rime fog' },
+  51: { emoji: '🌦️', desc: 'Light drizzle' },
+  53: { emoji: '🌦️', desc: 'Moderate drizzle' },
+  55: { emoji: '🌧️', desc: 'Dense drizzle' },
+  61: { emoji: '🌧️', desc: 'Slight rain' },
+  63: { emoji: '🌧️', desc: 'Moderate rain' },
+  65: { emoji: '🌧️', desc: 'Heavy rain' },
+  71: { emoji: '🌨️', desc: 'Slight snowfall' },
+  73: { emoji: '🌨️', desc: 'Moderate snowfall' },
+  75: { emoji: '❄️', desc: 'Heavy snowfall' },
+  80: { emoji: '🌦️', desc: 'Rain showers' },
+  81: { emoji: '🌧️', desc: 'Moderate showers' },
+  82: { emoji: '⛈️', desc: 'Violent showers' },
+  95: { emoji: '⛈️', desc: 'Thunderstorm' },
+  96: { emoji: '⛈️', desc: 'Thunderstorm w/ hail' },
+  99: { emoji: '⛈️', desc: 'Severe thunderstorm' },
+};
+function getWmo(code: number) { return WMO_MAP[code] || WMO_MAP[Math.floor(code / 10) * 10] || { emoji: '🌡️', desc: 'Weather' }; }
+
+async function fetchWeatherByCoords(lat: number, lon: number): Promise<WeatherResponse> {
+  // Fetch current + 5-day daily forecast from Open-Meteo (NO API key needed)
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,weather_code&timezone=auto&forecast_days=6`;
+  const res = await fetch(url).then(r => r.json());
+
+  // Reverse geocode for city name
+  let city = 'Your Location';
+  try {
+    const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`).then(r => r.json());
+    city = geo.address?.city || geo.address?.town || geo.address?.village || geo.address?.state || 'Your Location';
+  } catch { /* keep fallback */ }
+
+  const cur = res.current;
+  const wmo = getWmo(cur.weather_code);
+
+  return {
+    current: {
+      city,
+      temperature: cur.temperature_2m,
+      humidity: cur.relative_humidity_2m,
+      wind_speed: cur.wind_speed_10m,
+      description: wmo.desc,
+      icon: wmo.emoji,
+    },
+    forecast: res.daily.time.slice(1, 6).map((date: string, i: number) => {
+      const code = res.daily.weather_code[i + 1];
+      const w = getWmo(code);
+      return {
+        time: new Date(date).getTime() / 1000,
+        temperature: res.daily.temperature_2m_max[i + 1],
+        description: w.desc,
+        icon: w.emoji,
+      };
+    }),
+  };
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locError, setLocError] = useState(false);
+
+  // Get browser geolocation on mount
+  useEffect(() => {
+    if (!navigator.geolocation) { setLocError(true); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => {
+        // Fallback to a default location (Delhi)
+        setCoords({ lat: 28.6139, lon: 77.2090 });
+      },
+      { timeout: 10000 }
+    );
+  }, []);
 
   const { data: dash, isLoading, error, dataUpdatedAt } = useQuery<DashboardData>(
     'dashboard',
@@ -48,10 +119,10 @@ export default function DashboardPage() {
     { refetchInterval: 60_000 }
   );
 
-  const { data: weatherData } = useQuery<WeatherResponse>(
-    'weather',
-    () => weatherAPI.get().then((r) => r.data as WeatherResponse),
-    { refetchInterval: 10 * 60_000, staleTime: 5 * 60_000 }
+  const { data: weatherData, isLoading: weatherLoading } = useQuery<WeatherResponse>(
+    ['weather', coords?.lat, coords?.lon],
+    () => fetchWeatherByCoords(coords!.lat, coords!.lon),
+    { enabled: !!coords, refetchInterval: 10 * 60_000, staleTime: 5 * 60_000, retry: 2 }
   );
 
   const wsHandler = useCallback((msg: { event: string }) => { if (msg.event === 'sensor_update') qc.invalidateQueries('dashboard'); }, [qc]);
@@ -160,7 +231,7 @@ export default function DashboardPage() {
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-6 h-full">
-             <WeatherCard weather={weatherData} />
+             <WeatherCard weather={weatherData} loading={weatherLoading} />
           </motion.div>
         </div>
 
@@ -264,16 +335,9 @@ function EmptyChart({ message }: { message: string }) {
   );
 }
 
-function WeatherCard({ weather }: { weather?: WeatherResponse }) {
+function WeatherCard({ weather, loading }: { weather?: WeatherResponse; loading?: boolean }) {
   const c = weather?.current;
-  const f = weather?.forecast;
-
-  const dailyForecasts = f ? Object.values(f.reduce((acc: { [key: string]: any }, curr) => {
-    const date = new Date(curr.time * 1000).toLocaleDateString('en-US', { weekday: 'short' });
-    if (!acc[date]) acc[date] = curr;
-    return acc;
-  }, {}))
-  .slice(0, 5) : [];
+  const f = weather?.forecast ?? [];
 
   return (
     <Card className="bg-gradient-to-br from-[#1e3a8a] to-[#3b82f6] text-white shadow-lg shadow-blue-500/20 border-0 relative overflow-hidden flex flex-col hover:-translate-y-0.5 transition-transform duration-300 h-full">
@@ -282,53 +346,68 @@ function WeatherCard({ weather }: { weather?: WeatherResponse }) {
       </div>
       <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
       <CardHeader className="pb-0 relative z-10 pt-5">
-        <CardTitle className="text-[10px] flex items-center justify-between text-white/90 font-black tracking-widest uppercase">
-          <span className="flex items-center gap-2"><Cloud size={14} /> Local Weather Intelligence</span>
-          <span className="bg-white/10 px-2 py-0.5 rounded backdrop-blur-sm text-[10px] font-bold">5-DAY OUTLOOK</span>
+        <CardTitle className="text-[11px] flex items-center justify-between text-white font-black tracking-widest uppercase">
+          <span className="flex items-center gap-2"><Cloud size={14} /> Live Weather</span>
+          <span className="bg-white/15 px-2.5 py-1 rounded-lg backdrop-blur-sm text-[10px] font-bold text-white">5-DAY</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4 relative z-10 flex-1 flex flex-col justify-between">
-        {c ? (
+        {loading ? (
+          <div className="h-full flex flex-col items-center justify-center text-center py-10 text-white gap-3">
+            <Loader2 size={32} className="animate-spin text-white/60" />
+            <p className="text-sm font-bold text-white">Detecting your location...</p>
+          </div>
+        ) : c ? (
           <>
             <div className="flex-1 flex flex-col justify-center">
-              <div className="flex items-center gap-5 mb-4">
-                <div className="bg-white/20 rounded-3xl p-2.5 backdrop-blur-md shadow-inner border border-white/10 shrink-0">
-                  <Image src={`https://openweathermap.org/img/wn/${c.icon}@2x.png`} alt={c.description} width={68} height={68} unoptimized className="drop-shadow-lg" />
+              {/* City Pill */}
+              <div className="flex items-center gap-2 mb-4">
+                <span className="bg-white/15 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white flex items-center gap-1.5 border border-white/10 shadow-sm">
+                  <MapPin size={12} className="text-green-300" />
+                  {c.city}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-5 mb-5">
+                <div className="bg-white/20 rounded-3xl w-[80px] h-[80px] backdrop-blur-md shadow-inner border border-white/10 shrink-0 flex items-center justify-center">
+                  <span className="text-5xl drop-shadow-lg">{c.icon}</span>
                 </div>
                 <div>
                   <div className="text-5xl font-black tracking-tighter drop-shadow-md">{c.temperature.toFixed(0)}°</div>
-                  <div className="text-base font-bold capitalize text-white/90 drop-shadow-sm mt-1">{c.description}</div>
+                  <div className="text-base font-bold capitalize text-white drop-shadow-sm mt-1">{c.description}</div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="bg-black/20 backdrop-blur-md rounded-2xl p-3 border border-white/5 flex items-center justify-between">
-                  <div className="text-white/70 text-[10px] font-black uppercase tracking-widest"><Droplets size={12} className="text-blue-300 inline mr-1"/> Humid</div>
-                  <div className="font-black text-base">{c.humidity}%</div>
+                <div className="bg-black/25 backdrop-blur-md rounded-2xl p-3.5 border border-white/10 flex items-center justify-between">
+                  <div className="text-white text-[11px] font-bold uppercase tracking-wider"><Droplets size={12} className="text-blue-300 inline mr-1"/> Humidity</div>
+                  <div className="font-black text-lg text-white">{c.humidity}%</div>
                 </div>
-                <div className="bg-black/20 backdrop-blur-md rounded-2xl p-3 border border-white/5 flex items-center justify-between">
-                  <div className="text-white/70 text-[10px] font-black uppercase tracking-widest"><Wind size={12} className="text-teal-300 inline mr-1"/> Wind</div>
-                  <div className="font-black text-base">{c.wind_speed} <span className="text-[9px] font-bold text-white/60 lowercase">m/s</span></div>
+                <div className="bg-black/25 backdrop-blur-md rounded-2xl p-3.5 border border-white/10 flex items-center justify-between">
+                  <div className="text-white text-[11px] font-bold uppercase tracking-wider"><Wind size={12} className="text-teal-300 inline mr-1"/> Wind</div>
+                  <div className="font-black text-lg text-white">{c.wind_speed.toFixed(0)} <span className="text-[10px] font-bold text-white/80 lowercase">km/h</span></div>
                 </div>
               </div>
             </div>
 
             {/* 5 Day Forecast Strip */}
-            <div className="bg-black/20 rounded-2xl p-4 backdrop-blur-md border border-white/10 mt-auto shadow-inner">
-              <div className="flex justify-between items-center gap-2">
-                 {dailyForecasts.map((day, idx) => (
-                    <div key={idx} className="flex flex-col items-center justify-center p-2 rounded-xl hover:bg-white/10 transition-colors">
-                       <span className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{format(day.time * 1000, 'EEE')}</span>
-                       <Image src={`https://openweathermap.org/img/wn/${day.icon}.png`} alt={day.description} width={32} height={32} unoptimized className="drop-shadow-sm my-0.5" />
-                       <span className="text-sm font-black">{day.temperature.toFixed(0)}°</span>
-                    </div>
-                 ))}
+            {f.length > 0 && (
+              <div className="bg-black/25 rounded-2xl p-4 backdrop-blur-md border border-white/10 mt-auto shadow-inner">
+                <div className="flex justify-between items-center gap-2">
+                   {f.map((day: any, idx: number) => (
+                      <div key={idx} className="flex flex-col items-center justify-center p-2 rounded-xl hover:bg-white/10 transition-colors flex-1">
+                         <span className="text-[11px] font-bold text-white uppercase tracking-wider">{format(day.time * 1000, 'EEE')}</span>
+                         <span className="text-2xl my-1">{day.icon}</span>
+                         <span className="text-sm font-black text-white">{day.temperature.toFixed(0)}°</span>
+                      </div>
+                   ))}
+                </div>
               </div>
-            </div>
+            )}
           </>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center py-10 text-white/70">
-            <Cloud size={40} className="mb-4 opacity-50" />
-            <p className="text-sm font-semibold leading-relaxed">Configure farm location<br/>to sync local weather</p>
+          <div className="h-full flex flex-col items-center justify-center text-center py-10 text-white">
+            <Cloud size={40} className="mb-4 opacity-60" />
+            <p className="text-sm font-bold leading-relaxed text-white">Weather data unavailable</p>
           </div>
         )}
       </CardContent>
