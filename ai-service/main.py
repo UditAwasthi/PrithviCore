@@ -1,5 +1,5 @@
 """
-AgriDrishti AI Disease Detection Microservice
+PrithviCore AI Disease Detection Microservice
 FastAPI + PyTorch/torchvision plant disease classifier
 """
 
@@ -21,10 +21,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("agridrishti-ai")
+logger = logging.getLogger("prithvicore-ai")
 
 app = FastAPI(
-    title="AgriDrishti AI Service",
+    title="PrithviCore AI Service",
     description="Plant disease detection microservice",
     version="1.0.0",
 )

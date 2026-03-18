@@ -50,7 +50,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex items-center justify-center bg-agri-50">
         <div className="text-center space-y-3">
           <div className="text-4xl animate-bounce">🌱</div>
-          <p className="text-agri-600 font-semibold">Loading AgriDrishti…</p>
+          <p className="text-agri-600 font-semibold">Loading PrithviCore…</p>
         </div>
       </div>
     );

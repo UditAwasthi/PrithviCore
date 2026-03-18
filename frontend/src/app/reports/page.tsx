@@ -41,7 +41,7 @@ export default function ReportsPage() {
       const url = URL.createObjectURL(new Blob([res.data as BlobPart], { type: 'application/pdf' }));
       const a = document.createElement('a');
       a.href = url;
-      a.download = `AgriDrishti_Report_${type}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      a.download = `PrithviCore_Report_${type}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success('Report downloaded!');

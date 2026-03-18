@@ -1,4 +1,4 @@
-# 🌱 AgriDrishti – Smart Farming System
+# 🌱 PrithviCore – Smart Farming System
 
 A complete full-stack IoT farm monitoring platform with real-time sensor data, AI disease detection, weather integration, and automated recommendations.
 
@@ -28,7 +28,7 @@ A complete full-stack IoT farm monitoring platform with real-time sensor data, A
 ## 📁 Project Structure
 
 ```
-agridrishti/
+PrithviCore/
 ├── frontend/              ← Next.js 14 + TailwindCSS + Recharts
 │   └── src/
 │       ├── app/           ← Pages (dashboard, soil, disease, etc.)
@@ -67,7 +67,7 @@ agridrishti/
 
 ```bash
 git clone <your-repo>
-cd agridrishti
+cd PrithviCore
 ```
 
 ---
@@ -85,7 +85,7 @@ cp .env.example .env
 
 **`.env` values to fill:**
 ```env
-MONGODB_URI=mongodb+srv://username:password@cluster0.mongodb.net/agridrishti
+MONGODB_URI=mongodb+srv://username:password@cluster0.mongodb.net/PrithviCore
 JWT_SECRET=your-32-character-secret-key-here
 OPENWEATHER_API_KEY=your_openweathermap_key
 AI_SERVICE_URL=http://localhost:8000
@@ -316,4 +316,4 @@ MIT — Free to use for personal and commercial projects.
 
 ---
 
-*Built with ❤️ for Indian farmers — AgriDrishti Smart Farming System*
+*Built with ❤️ for Indian farmers — PrithviCore Smart Farming System*

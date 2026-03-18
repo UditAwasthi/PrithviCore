@@ -16,10 +16,10 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_API_URL ||
-      'https://agridrishti-project.onrender.com',
+      'https://prithvicore-project.onrender.com',
     NEXT_PUBLIC_WS_URL:
       process.env.NEXT_PUBLIC_WS_URL ||
-      'wss://agridrishti-project.onrender.com',
+      'wss://prithvicore-project.onrender.com',
   },
 };
 

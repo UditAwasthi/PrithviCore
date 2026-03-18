@@ -1,7 +1,7 @@
 {
-  "name": "agridrishti-backend",
+  "name": "prithvicore-backend",
   "version": "1.0.0",
-  "description": "AgriDrishti Smart Farming Backend API",
+  "description": "PrithviCore Smart Farming Backend API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

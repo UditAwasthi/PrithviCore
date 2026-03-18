@@ -93,7 +93,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-agri-600 rounded-2xl text-3xl mb-4 shadow-lg select-none">
             🌱
           </div>
-          <h1 className="text-3xl font-extrabold text-agri-800">AgriDrishti</h1>
+          <h1 className="text-3xl font-extrabold text-agri-800">PrithviCore</h1>
           <p className="text-gray-500 mt-1 text-sm">Smart Farming System</p>
         </div>
 
@@ -202,7 +202,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          AgriDrishti · Smart IoT Farming Platform
+          PrithviCore · Smart IoT Farming Platform
         </p>
       </div>
     </div>

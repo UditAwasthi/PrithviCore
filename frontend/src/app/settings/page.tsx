@@ -7,9 +7,9 @@ import { useAuth } from '@/lib/AuthContext';
 export default function SettingsPage() {
   const { user } = useAuth();
 
-  const apiKey = user ? `AGD-${user._id.slice(-12).toUpperCase()}` : 'AGD-YOUR_DEVICE_KEY';
-  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL ?? 'https://agridrishti-project.onrender.com'}/api/sensor-data`;
-  const wsUrl  = process.env.NEXT_PUBLIC_WS_URL ?? 'wss://agridrishti-project.onrender.com';
+  const apiKey = user ? `PC-${user._id.slice(-12).toUpperCase()}` : 'PC-YOUR_DEVICE_KEY';
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_URL ?? 'https://prithvicore-project.onrender.com'}/api/sensor-data`;
+  const wsUrl  = process.env.NEXT_PUBLIC_WS_URL ?? 'wss://prithvicore-project.onrender.com';
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {

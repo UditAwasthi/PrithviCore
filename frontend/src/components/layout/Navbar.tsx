@@ -26,7 +26,7 @@ export default function Navbar({ alerts = [] }: NavbarProps) {
       <Link href="/dashboard" className="flex items-center gap-3 text-white hover:opacity-90 transition-opacity">
         <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-xl select-none">🌱</div>
         <div>
-          <span className="text-lg font-extrabold tracking-tight">AgriDrishti</span>
+          <span className="text-lg font-extrabold tracking-tight">PrithviCore</span>
           <span className="ml-2 text-sm font-medium text-white/75 hidden sm:inline">Smart Farming System</span>
         </div>
       </Link>

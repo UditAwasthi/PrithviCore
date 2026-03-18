@@ -1,6 +1,6 @@
 /*
  * ╔══════════════════════════════════════════════════════════════╗
- * ║  AgriDrishti IoT Firmware  –  ESP32 + Sensors               ║
+ * ║  PrithviCore IoT Firmware  –  ESP32 + Sensors               ║
  * ║                                                              ║
  * ║  Sensors:                                                    ║
  * ║    • Soil Moisture  → Analog pin GPIO34                      ║
@@ -67,7 +67,7 @@ void setup() {
   dht.begin();
   pinMode(LED_PIN, OUTPUT);
 
-  Serial.println("\n🌱 AgriDrishti IoT Device Starting...");
+  Serial.println("\n🌱 PrithviCore IoT Device Starting...");
 
   connectWiFi();
 }

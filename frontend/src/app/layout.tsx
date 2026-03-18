@@ -15,7 +15,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'AgriDrishti – Smart Farming System',
+  title: 'PrithviCore – Smart Farming System',
   description: 'Real-time IoT farm monitoring dashboard',
 };
 

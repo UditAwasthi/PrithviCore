@@ -187,7 +187,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await googleLogin(credential);
-      toast.success('Account created! Welcome to AgriDrishti 🌱');
+      toast.success('Account created! Welcome to PrithviCore 🌱');
       router.push('/dashboard');
     } catch (err: unknown) {
       toast.error(getErrorMessage(err));
@@ -225,7 +225,7 @@ export default function SignupPage() {
           country: form.country || 'India',
         },
       });
-      toast.success('Account created! Welcome to AgriDrishti 🌱');
+      toast.success('Account created! Welcome to PrithviCore 🌱');
       router.push('/dashboard');
     } catch (err: unknown) {
       toast.error(getErrorMessage(err));
@@ -249,9 +249,7 @@ export default function SignupPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 bg-agri-600 rounded-2xl text-2xl mb-3 shadow-lg select-none">
             🌱
           </div>
-          <h1 className="text-2xl font-extrabold text-agri-800">
-            Create your farm account
-          </h1>
+          <h1 className="text-2xl font-extrabold text-agri-800">PrithviCore</h1>
           <p className="text-sm text-gray-500 mt-1">
             Start monitoring your farm with real-time IoT data
           </p>

@@ -28,7 +28,7 @@ export function useWebSocket(onMessage?: MessageHandler) {
 
     const WS_URL =
       process.env.NEXT_PUBLIC_WS_URL ||
-      'wss://agridrishti-project.onrender.com';
+      'wss://prithvicore-project.onrender.com';
 
     // Don't open a second socket if one is already open/connecting
     if (

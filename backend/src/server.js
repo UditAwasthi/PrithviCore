@@ -105,7 +105,7 @@ const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
   server.listen(PORT, () => {
-    console.log(`\n🌱 AgriDrishti Backend running on port ${PORT}`);
+    console.log(`\n🌱 PrithviCore Backend running on port ${PORT}`);
     console.log(`📡 WebSocket server ready`);
     console.log(`🔗 http://localhost:${PORT}\n`);
   });

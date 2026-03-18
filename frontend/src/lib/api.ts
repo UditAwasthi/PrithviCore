@@ -6,7 +6,7 @@ import axios, { AxiosError } from 'axios';
 // ---------------------------------------------------------------------------
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  'https://agridrishti-project.onrender.com';
+  'https://prithvicore-project.onrender.com';
 
 // ---------------------------------------------------------------------------
 // Token helpers — localStorage is only available in the browser.
@@ -16,15 +16,15 @@ const API_URL =
 export const tokenHelpers = {
   get: (): string | null => {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('agri_token');
+    return localStorage.getItem('prithvi_token');
   },
   set: (token: string): void => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('agri_token', token);
+    localStorage.setItem('prithvi_token', token);
   },
   remove: (): void => {
     if (typeof window === 'undefined') return;
-    localStorage.removeItem('agri_token');
+    localStorage.removeItem('prithvi_token');
   },
 };
 
