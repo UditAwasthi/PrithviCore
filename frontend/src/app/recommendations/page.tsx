@@ -5,13 +5,17 @@ import { Lightbulb, RefreshCw, AlertTriangle, Info, CheckCircle, XCircle } from 
 import { formatDistanceToNow } from 'date-fns';
 import AppLayout from '@/components/layout/AppLayout';
 import { recommendationsAPI } from '@/lib/api';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { cn } from '@/lib/utils';
 
 const PRIORITY_CFG = {
-  critical: { bg: 'bg-red-50 border-red-200', badge: 'bg-red-100 text-red-700', icon: <XCircle size={18} className="text-red-500 flex-shrink-0" /> },
-  high: { bg: 'bg-orange-50 border-orange-200', badge: 'bg-orange-100 text-orange-700', icon: <AlertTriangle size={18} className="text-orange-500 flex-shrink-0" /> },
-  medium: { bg: 'bg-amber-50 border-amber-200', badge: 'bg-amber-100 text-amber-700', icon: <AlertTriangle size={18} className="text-amber-500 flex-shrink-0" /> },
-  low: { bg: 'bg-blue-50 border-blue-200', badge: 'bg-blue-100 text-blue-700', icon: <Info size={18} className="text-blue-500 flex-shrink-0" /> },
-  info: { bg: 'bg-agri-50 border-agri-200', badge: 'bg-agri-100 text-agri-700', icon: <CheckCircle size={18} className="text-agri-500 flex-shrink-0" /> },
+  critical: { bg: 'bg-destructive/5 border-destructive/20 hover:border-destructive/40', badge: 'bg-destructive/10 text-destructive', icon: <XCircle size={20} className="text-destructive flex-shrink-0" /> },
+  high: { bg: 'bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40', badge: 'bg-orange-500/10 text-orange-600 dark:text-orange-400', icon: <AlertTriangle size={20} className="text-orange-500 flex-shrink-0" /> },
+  medium: { bg: 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40', badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', icon: <AlertTriangle size={20} className="text-amber-500 flex-shrink-0" /> },
+  low: { bg: 'bg-blue-500/5 border-blue-500/20 hover:border-blue-500/40', badge: 'bg-blue-500/10 text-blue-600 dark:text-blue-400', icon: <Info size={20} className="text-blue-500 flex-shrink-0" /> },
+  info: { bg: 'bg-primary/5 border-primary/20 hover:border-primary/40', badge: 'bg-primary/10 text-primary', icon: <CheckCircle size={20} className="text-primary flex-shrink-0" /> },
 } as const;
 type PKey = keyof typeof PRIORITY_CFG;
 
@@ -35,97 +39,135 @@ export default function RecommendationsPage() {
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-agri-700 flex items-center gap-2"><Lightbulb size={24} /> Farm Recommendations</h1>
-          <p className="text-sm text-gray-500 mt-1">AI-powered suggestions based on your latest sensor readings</p>
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
+            <Lightbulb size={28} className="text-primary" /> AI Recommendations
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">Smart, actionable insights based on your farm's real-time data</p>
         </div>
-        <button onClick={() => refetch()}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-agri-600 hover:bg-agri-50 rounded-xl transition-colors border border-agri-200">
-          <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} /> Refresh
-        </button>
+        <Button variant="outline" onClick={() => refetch()} className="gap-2 font-semibold shadow-sm w-full sm:w-auto" disabled={isLoading}>
+          <RefreshCw size={16} className={cn(isLoading && 'animate-spin')} /> Refresh
+        </Button>
       </div>
 
       {/* Summary pills */}
-      <div className="flex gap-3 mb-6 flex-wrap">
+      <div className="flex gap-3 mb-8 flex-wrap">
         {[
-          { label: 'Total', count: recs.length, color: 'bg-gray-100 text-gray-700' },
-          { label: 'Critical', count: critical, color: 'bg-red-100 text-red-700' },
-          { label: 'High Priority', count: high, color: 'bg-orange-100 text-orange-700' },
+          { label: 'Total active', count: recs.length, color: 'bg-muted text-foreground border-border' },
+          { label: 'Critical', count: critical, color: 'bg-destructive/10 text-destructive border-transparent' },
+          { label: 'High Priority', count: high, color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-transparent' },
         ].map((p) => (
-          <div key={p.label} className={`px-4 py-1.5 rounded-full text-sm font-bold ${p.color}`}>
-            {p.count} {p.label}
+          <div key={p.label} className={cn("px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border", p.color)}>
+            <span className="text-sm mr-1">{p.count}</span> {p.label}
           </div>
         ))}
         {data?.last_updated && (
-          <div className="px-4 py-1.5 rounded-full text-sm text-gray-400 bg-gray-50">
-            Updated {formatDistanceToNow(new Date(data.last_updated), { addSuffix: true })}
+          <div className="px-4 py-1.5 rounded-full text-xs font-bold text-muted-foreground bg-background border border-border flex items-center gap-1.5 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary block animate-pulse"></span>
+            Sync {formatDistanceToNow(new Date(data.last_updated), { addSuffix: true })}
           </div>
         )}
       </div>
 
-      {/* Sensor snapshot */}
-      {snap && (
-        <div className="bg-agri-50 border border-agri-100 rounded-2xl p-4 mb-6">
-          <p className="text-xs font-bold text-agri-600 uppercase tracking-wide mb-2">Sensor Snapshot</p>
-          <div className="flex gap-3 flex-wrap text-sm">
-            {[
-              { label: 'Moisture', val: snap.moisture != null ? `${snap.moisture.toFixed(1)}%` : '–' },
-              { label: 'Temperature', val: snap.temperature != null ? `${snap.temperature.toFixed(1)}°C` : '–' },
-              { label: 'Humidity', val: snap.humidity != null ? `${snap.humidity.toFixed(1)}%` : '–' },
-              { label: 'pH', val: snap.ph != null ? snap.ph.toFixed(2) : '–' },
-              { label: 'N', val: snap.nitrogen != null ? `${snap.nitrogen.toFixed(0)} mg/kg` : '–' },
-              { label: 'P', val: snap.phosphorus != null ? `${snap.phosphorus.toFixed(0)} mg/kg` : '–' },
-              { label: 'K', val: snap.potassium != null ? `${snap.potassium.toFixed(0)} mg/kg` : '–' },
-            ].map((item) => (
-              <div key={item.label} className="bg-white rounded-lg px-3 py-1.5 text-gray-700 border border-agri-100 text-xs">
-                <span className="text-agri-500 font-semibold">{item.label}:</span> {item.val}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content: Recommendations */}
+        <div className="lg:col-span-2 space-y-4">
+          {!!error && (
+            <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 text-destructive font-medium text-sm flex items-center gap-3">
+              <AlertTriangle size={18} />
+              <p>Failed to load recommendations. Ensure the backend AI engine is reachable.</p>
+            </div>
+          )}
 
-      {!!error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-red-700 text-sm">
-          ⚠️ Failed to load recommendations. Ensure the backend and sensors are connected.
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="space-y-4">{[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />)}</div>
-      ) : recs.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-agri-100">
-          <div className="text-5xl mb-4">🌱</div>
-          <p className="text-lg font-bold text-agri-700">All systems look good!</p>
-          <p className="text-sm text-gray-400 mt-2">No urgent recommendations at this time.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {recs.map((rec, i) => {
-            const cfg = PRIORITY_CFG[rec.priority] ?? PRIORITY_CFG.info;
-            return (
-              <div key={rec.id} className={`flex gap-4 p-5 rounded-2xl border animate-slide-up ${cfg.bg}`}
-                style={{ animationDelay: `${i * 40}ms` }}>
-                <div className="text-2xl flex-shrink-0 mt-0.5">{rec.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <h3 className="font-bold text-gray-800">{rec.title}</h3>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${cfg.badge}`}>{rec.category}</span>
-                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full capitalize ${cfg.badge}`}>{rec.priority}</span>
+          {isLoading ? (
+            <div className="space-y-4">
+               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
+            </div>
+          ) : recs.length === 0 ? (
+            <Card className="shadow-sm border-dashed border-border bg-card/50">
+              <CardContent className="text-center py-16 flex flex-col items-center">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner">✨</div>
+                <p className="text-xl font-bold text-foreground">Farm is absolutely optimal!</p>
+                <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto leading-relaxed">Your crops are thriving. No urgent interventions are required at this time based on current sensor data.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {recs.map((rec, i) => {
+                const cfg = PRIORITY_CFG[rec.priority] ?? PRIORITY_CFG.info;
+                return (
+                  <div key={rec.id} className={cn("flex gap-5 p-6 rounded-2xl border shadow-sm transition-all animate-slide-up relative overflow-hidden group", cfg.bg)}
+                    style={{ animationDelay: `${i * 40}ms` }}>
+                    <div className="absolute top-0 left-0 w-1 h-full bg-current opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <div className="text-3xl flex-shrink-0 mt-1 bg-background rounded-full p-2 shadow-sm border border-border/50">{rec.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
+                        <h3 className="font-bold text-foreground text-lg tracking-tight">{rec.title}</h3>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <span className={cn("text-[10px] uppercase font-black px-2.5 py-1 rounded-md tracking-widest", cfg.badge)}>{rec.category}</span>
+                          <span className={cn("text-[10px] uppercase font-black px-2.5 py-1 rounded-md tracking-widest border border-current/20", cfg.badge)}>{rec.priority}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed font-medium">{rec.message}</p>
+                      <div className="flex items-center gap-2 mt-4 text-sm font-bold text-foreground bg-background/60 rounded-lg px-4 py-2.5 border border-border/50 shadow-sm w-fit group-hover:bg-background transition-colors">
+                        {cfg.icon} Action: <span className="text-primary">{rec.action}</span>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1.5">{rec.message}</p>
-                  <div className="flex items-center gap-2 mt-3 text-sm font-semibold text-gray-700">
-                    {cfg.icon} <span>Action: {rec.action}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Sidebar: Context / Sandbox info */}
+        <div className="lg:col-span-1 space-y-6">
+          {isLoading && !snap ? (
+             <Card className="shadow-sm">
+               <CardContent className="p-5">
+                 <Skeleton className="h-6 w-1/2 mb-4" />
+                 <div className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-full" /></div>
+               </CardContent>
+             </Card>
+          ) : snap && (
+            <Card className="shadow-sm border-border">
+              <CardContent className="p-5">
+                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary block"/> Data Context
+                </p>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {[
+                    { label: 'Moisture', val: snap.moisture != null ? `${snap.moisture.toFixed(1)}%` : '–' },
+                    { label: 'Temp', val: snap.temperature != null ? `${snap.temperature.toFixed(1)}°C` : '–' },
+                    { label: 'Humidity', val: snap.humidity != null ? `${snap.humidity.toFixed(1)}%` : '–' },
+                    { label: 'pH Level', val: snap.ph != null ? snap.ph.toFixed(2) : '–' },
+                    { label: 'Nitrogen', val: snap.nitrogen != null ? `${snap.nitrogen.toFixed(0)}` : '–' },
+                    { label: 'Phosphorus', val: snap.phosphorus != null ? `${snap.phosphorus.toFixed(0)}` : '–' },
+                    { label: 'Potassium', val: snap.potassium != null ? `${snap.potassium.toFixed(0)}` : '–' },
+                  ].map((item) => (
+                    <div key={item.label} className="bg-muted/30 rounded-xl p-3 border border-border/50 flex flex-col justify-center">
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-1">{item.label}</span> 
+                      <span className="font-extrabold text-foreground">{item.val}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="bg-primary/5 border-primary/20 shadow-sm">
+             <CardContent className="p-5">
+                <h4 className="font-bold text-foreground flex items-center gap-2 mb-2">
+                  <Lightbulb size={16} className="text-primary" /> How it works
+                </h4>
+                <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                  PrithviCore AI constantly analyzes the live stream of IoT metrics against crop-specific thresholds to generate these actionable tasks.
+                </p>
+             </CardContent>
+          </Card>
+        </div>
+      </div>
     </AppLayout>
   );
 }

@@ -8,6 +8,10 @@ import { format, subDays } from 'date-fns';
 import AppLayout from '@/components/layout/AppLayout';
 import { reportsAPI } from '@/lib/api';
 import { SoilTrendChart, NPKChart } from '@/components/charts/SoilChart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { cn } from '@/lib/utils';
 
 interface DiseaseEvent { _id: string; disease_name: string; severity: string; confidence: number; timestamp: string; }
 interface Summary {
@@ -54,117 +58,150 @@ export default function ReportsPage() {
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-agri-700 flex items-center gap-2"><FileBarChart size={24} /> Farm Reports</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {data?.period
-              ? `${format(new Date(data.period.from), 'MMM d')} – ${format(new Date(data.period.to), 'MMM d, yyyy')}`
-              : `${format(subDays(new Date(), 7), 'MMM d')} – ${format(new Date(), 'MMM d, yyyy')}`}
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
+            <FileBarChart size={28} className="text-primary" /> System Reports
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+            Reporting Period: 
+            <span className="font-bold text-foreground bg-muted px-2 py-0.5 rounded-md">
+              {data?.period
+                ? `${format(new Date(data.period.from), 'MMM d')} – ${format(new Date(data.period.to), 'MMM d, yyyy')}`
+                : `${format(subDays(new Date(), 7), 'MMM d')} – ${format(new Date(), 'MMM d, yyyy')}`}
+            </span>
           </p>
         </div>
         <div className="flex gap-3">
           {(['weekly','monthly'] as const).map((t) => (
-            <button key={t} onClick={() => handleDownload(t)} disabled={downloading}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-agri-600 text-white rounded-xl hover:bg-agri-700 transition-colors disabled:opacity-60">
-              {downloading ? <Loader size={14} className="animate-spin" /> : <Download size={14} />}
+            <Button key={t} onClick={() => handleDownload(t)} disabled={downloading} className="font-bold shadow-sm">
+              {downloading ? <Loader size={16} className="animate-spin mr-2" /> : <Download size={16} className="mr-2" />}
               {t.charAt(0).toUpperCase() + t.slice(1)} PDF
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
         {[
           { label: 'Avg Moisture',    val: summary.avg_moisture  != null ? `${summary.avg_moisture.toFixed(1)}%`  : '–', icon: '💧' },
           { label: 'Avg Temperature', val: summary.avg_temp      != null ? `${summary.avg_temp.toFixed(1)}°C`     : '–', icon: '🌡️' },
-          { label: 'Avg pH',          val: summary.avg_ph        != null ? summary.avg_ph.toFixed(2)              : '–', icon: '🧪' },
+          { label: 'Avg pH Level',    val: summary.avg_ph        != null ? summary.avg_ph.toFixed(2)              : '–', icon: '🧪' },
           { label: 'Avg Nitrogen',    val: summary.avg_nitrogen  != null ? `${summary.avg_nitrogen.toFixed(0)}`   : '–', icon: '🌿' },
           { label: 'Total Readings',  val: summary.total_readings != null ? String(summary.total_readings)        : '0', icon: '📊' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-agri-100 p-4 shadow-sm">
-            <div className="text-2xl mb-2">{s.icon}</div>
-            <div className="text-xl font-extrabold text-agri-700">{isLoading ? '…' : s.val}</div>
-            <div className="text-xs text-gray-400 mt-0.5 font-medium">{s.label}</div>
-          </div>
+          <Card key={s.label} className="shadow-sm border-border/50">
+            <CardContent className="p-5">
+              <div className="text-2xl mb-3 drop-shadow-sm">{s.icon}</div>
+              <div className="text-2xl font-black text-foreground">{isLoading ? <Skeleton className="h-8 w-16" /> : s.val}</div>
+              <div className="text-[10px] text-muted-foreground mt-1 font-bold uppercase tracking-widest">{s.label}</div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-2xl border border-agri-100 p-5 shadow-sm">
-          <h3 className="font-bold text-agri-700 mb-4">Soil Conditions This Week</h3>
-          {isLoading ? <div className="h-56 bg-agri-50 rounded-xl animate-pulse" />
-            : daily.length > 0 ? <SoilTrendChart data={daily} height={220} /> : <EmptyChart />}
-        </div>
-        <div className="bg-white rounded-2xl border border-agri-100 p-5 shadow-sm">
-          <h3 className="font-bold text-agri-700 mb-4">Nutrient Levels This Week</h3>
-          {isLoading ? <div className="h-56 bg-agri-50 rounded-xl animate-pulse" />
-            : daily.length > 0 ? <NPKChart data={daily} height={220} /> : <EmptyChart />}
-        </div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+        <Card className="shadow-sm border-border/50 flex flex-col">
+          <CardHeader className="pb-2 border-b border-border/30">
+            <CardTitle className="text-lg font-bold">Soil Conditions (7 Days)</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 flex-1 min-h-[250px]">
+            {isLoading ? <Skeleton className="h-[220px] w-full mt-2" /> : daily.length > 0 ? <SoilTrendChart data={daily} height={220} /> : <div className="mt-2"><EmptyChart /></div>}
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm border-border/50 flex flex-col">
+          <CardHeader className="pb-2 border-b border-border/30">
+            <CardTitle className="text-lg font-bold">Nutrient Levels (7 Days)</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 flex-1 min-h-[250px]">
+            {isLoading ? <Skeleton className="h-[220px] w-full mt-2" /> : daily.length > 0 ? <NPKChart data={daily} height={220} /> : <div className="mt-2"><EmptyChart /></div>}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Moisture range */}
-      {summary.min_moisture != null && (
-        <div className="bg-white rounded-2xl border border-agri-100 p-5 shadow-sm mb-6">
-          <h3 className="font-bold text-agri-700 mb-4">Moisture Range Analysis</h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            {[
-              { label: 'Minimum', val: `${summary.min_moisture?.toFixed(1)}%`, color: 'text-red-600' },
-              { label: 'Average', val: `${summary.avg_moisture?.toFixed(1)}%`, color: 'text-agri-600' },
-              { label: 'Maximum', val: `${summary.max_moisture?.toFixed(1)}%`, color: 'text-blue-600' },
-            ].map((m) => (
-              <div key={m.label} className="bg-agri-50 rounded-xl p-4">
-                <div className={`text-2xl font-extrabold ${m.color}`}>{m.val}</div>
-                <div className="text-xs text-gray-400 font-medium mt-1">{m.label}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Moisture range */}
+        {summary.min_moisture != null && (
+          <Card className="shadow-sm border-border/50 lg:col-span-1">
+            <CardHeader className="pb-4 border-b border-border/30">
+              <CardTitle className="text-base font-bold">Moisture Ranges</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 flex flex-col justify-center h-[calc(100%-65px)]">
+              <div className="space-y-4">
+                {[
+                  { label: 'Minimum', val: `${summary.min_moisture?.toFixed(1)}%`, color: 'text-orange-500' },
+                  { label: 'Average', val: `${summary.avg_moisture?.toFixed(1)}%`, color: 'text-primary' },
+                  { label: 'Maximum', val: `${summary.max_moisture?.toFixed(1)}%`, color: 'text-blue-500' },
+                ].map((m) => (
+                  <div key={m.label} className="bg-muted/30 border border-border/50 rounded-xl p-4 flex items-center justify-between">
+                    <div className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest">{m.label}</div>
+                    <div className={cn("text-xl font-black", m.color)}>{m.val}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Disease events */}
-      <div className="bg-white rounded-2xl border border-agri-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-agri-50">
-          <h3 className="font-bold text-agri-700">Disease Events This Period</h3>
-        </div>
-        {diseases.length === 0 ? (
-          <div className="py-10 text-center text-gray-300"><div className="text-3xl mb-2">✅</div><p className="text-sm">No disease events recorded</p></div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs font-bold text-gray-400 uppercase tracking-wide border-b border-gray-50">
-                {['Disease','Severity','Confidence','Date'].map((h) => <th key={h} className="text-left px-4 py-3">{h}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {diseases.map((d) => (
-                <tr key={d._id} className="border-b border-gray-50 hover:bg-agri-50/20 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-gray-800">{d.disease_name}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
-                      d.severity === 'critical' ? 'bg-red-100 text-red-700' :
-                      d.severity === 'high'     ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {d.severity}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{(d.confidence * 100).toFixed(0)}%</td>
-                  <td className="px-4 py-3 text-gray-400">{format(new Date(d.timestamp), 'MMM d, yyyy')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            </CardContent>
+          </Card>
         )}
+
+        {/* Disease events */}
+        <Card className={cn("shadow-sm border-border/50 overflow-hidden", summary.min_moisture != null ? "lg:col-span-2" : "lg:col-span-3")}>
+          <CardHeader className="border-b border-border bg-muted/20 pb-4">
+             <CardTitle className="text-base font-bold flex items-center gap-2">Disease Events Detected</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {diseases.length === 0 ? (
+              <div className="py-16 text-center text-muted-foreground flex flex-col items-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl mb-4 shadow-inner">😌</div>
+                <p className="font-bold text-foreground">No disease events recorded</p>
+                <p className="text-sm mt-1">Your plants are showing no signs of distress in this period.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto custom-scrollbar max-h-[300px]">
+                <table className="w-full text-sm text-left whitespace-nowrap">
+                  <thead className="sticky top-0 bg-background z-10">
+                    <tr className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border">
+                      {['Disease','Severity','Confidence','Date'].map((h) => <th key={h} className="px-6 py-4">{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {diseases.map((d) => (
+                      <tr key={d._id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4 font-bold text-foreground">{d.disease_name}</td>
+                        <td className="px-6 py-4">
+                          <span className={cn("px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest",
+                            d.severity === 'critical' ? 'bg-destructive/10 text-destructive' :
+                            d.severity === 'high'     ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400')}>
+                            {d.severity}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-medium text-foreground">
+                           <div className="flex items-center gap-2">
+                             <div className="w-8 h-1 bg-muted rounded-full overflow-hidden"><div className="h-full bg-primary" style={{width: `${d.confidence*100}%`}}></div></div>
+                             {(d.confidence * 100).toFixed(0)}%
+                           </div>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-semibold text-muted-foreground">{format(new Date(d.timestamp), 'MMM d, yyyy')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
     </AppLayout>
   );
 }
 
 function EmptyChart() {
   return (
-    <div className="h-48 flex flex-col items-center justify-center text-gray-300">
-      <span className="text-3xl mb-2">📊</span><p className="text-sm">No data available</p>
+    <div className="h-[220px] flex flex-col items-center justify-center text-muted-foreground bg-muted/20 rounded-2xl border border-dashed border-border">
+      <span className="text-3xl mb-3 grayscale opacity-50 font-medium drop-shadow-sm">📈</span>
+      <p className="text-sm font-semibold">Insufficient temporal data array</p>
     </div>
   );
 }

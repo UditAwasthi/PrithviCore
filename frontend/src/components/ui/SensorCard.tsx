@@ -1,7 +1,8 @@
 'use client';
 
-import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/Card';
 
 interface SensorCardProps {
   label: string;
@@ -15,18 +16,18 @@ interface SensorCardProps {
   loading?: boolean;
 }
 
-const STATUS_STYLES = {
-  optimal: 'bg-agri-50 border-agri-200 text-agri-700',
-  warning: 'bg-amber-50 border-amber-200 text-amber-700',
-  danger:  'bg-red-50  border-red-200  text-red-700',
-  info:    'bg-blue-50 border-blue-200 text-blue-700',
+const STATUS_BORDER_STYLES = {
+  optimal: 'border-b-[3px] border-b-primary shadow-sm shadow-primary/5',
+  warning: 'border-b-[3px] border-b-orange-400 shadow-sm shadow-orange-400/5',
+  danger:  'border-b-[3px] border-b-destructive shadow-sm shadow-destructive/5',
+  info:    'border-b-[3px] border-b-blue-400 shadow-sm shadow-blue-400/5',
 };
 
 const BADGE_STYLES = {
-  optimal: 'bg-agri-100  text-agri-700',
-  warning: 'bg-amber-100 text-amber-700',
-  danger:  'bg-red-100   text-red-700',
-  info:    'bg-blue-100  text-blue-700',
+  optimal: 'bg-primary/10 text-primary border border-primary/20',
+  warning: 'bg-orange-400/10 text-orange-600 dark:text-orange-400 border border-orange-400/20',
+  danger:  'bg-destructive/10 text-destructive border border-destructive/20',
+  info:    'bg-blue-400/10 text-blue-600 dark:text-blue-400 border border-blue-400/20',
 };
 
 export default function SensorCard({
@@ -34,47 +35,45 @@ export default function SensorCard({
   statusLabel, trend, trendValue, loading,
 }: SensorCardProps) {
   return (
-    <div className={clsx(
-      'rounded-2xl border p-5 transition-all duration-300 hover:shadow-md',
-      STATUS_STYLES[status],
-      loading && 'animate-pulse'
-    )}>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="text-2xl">{icon}</div>
-        {statusLabel && (
-          <span className={clsx('text-[11px] font-bold px-2.5 py-1 rounded-full', BADGE_STYLES[status])}>
-            {statusLabel}
-          </span>
-        )}
-      </div>
-
-      {/* Value */}
-      <div className="mb-1">
-        {loading ? (
-          <div className="h-9 w-24 bg-current/20 rounded-lg" />
-        ) : (
-          <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-extrabold tabular-nums leading-none">
-              {value !== null && value !== undefined ? value.toFixed(unit === 'pH' ? 2 : 1) : '–'}
+    <Card className={cn("overflow-hidden group transition-all duration-300 hover:shadow-md", STATUS_BORDER_STYLES[status])}>
+      <CardContent className={cn("p-5 h-full flex flex-col justify-between", loading && "animate-pulse")}>
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="text-2xl opacity-90 group-hover:scale-110 transition-transform duration-300 select-none">{icon}</div>
+          {statusLabel && (
+            <span className={cn('text-[11px] font-bold px-2 py-0.5 rounded-full', BADGE_STYLES[status])}>
+              {statusLabel}
             </span>
-            <span className="text-base font-medium opacity-70">{unit}</span>
+          )}
+        </div>
+
+        {/* Value */}
+        <div className="mb-2">
+          {loading ? (
+            <div className="h-9 w-24 bg-muted rounded-md" />
+          ) : (
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-extrabold tabular-nums tracking-tighter text-foreground">
+                {value !== null && value !== undefined ? value.toFixed(unit === 'pH' ? 2 : 1) : '–'}
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">{unit}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Label */}
+        <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+
+        {/* Trend */}
+        {trend && trendValue && !loading && (
+          <div className="flex items-center gap-1 mt-3 text-xs font-medium text-muted-foreground/80">
+            {trend === 'up'     && <TrendingUp  size={14} className="text-primary" />}
+            {trend === 'down'   && <TrendingDown size={14} className="text-destructive" />}
+            {trend === 'stable' && <Minus        size={14} className="text-primary/70" />}
+            <span>{trendValue}</span>
           </div>
         )}
-      </div>
-
-      {/* Label */}
-      <p className="text-sm font-semibold opacity-80">{label}</p>
-
-      {/* Trend */}
-      {trend && trendValue && !loading && (
-        <div className="flex items-center gap-1 mt-2 text-xs font-medium opacity-70">
-          {trend === 'up'     && <TrendingUp  size={12} />}
-          {trend === 'down'   && <TrendingDown size={12} />}
-          {trend === 'stable' && <Minus        size={12} />}
-          <span>{trendValue}</span>
-        </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

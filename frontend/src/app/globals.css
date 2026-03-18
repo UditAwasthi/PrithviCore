@@ -2,28 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-/* --font-inter is injected by next/font in layout.tsx */
-:root {
-  --font-inter: 'Inter', sans-serif;
+@layer base {
+  :root {
+    --font-inter: 'Inter', sans-serif;
+    
+    /* Default (Light Mode) */
+    --background: #fbfdfc;
+    --foreground: #090e0b;
+
+    --card: #ffffff;
+    --card-foreground: #090e0b;
+
+    --popover: #ffffff;
+    --popover-foreground: #090e0b;
+
+    --primary: #2d8c4e;
+    --primary-foreground: #ffffff;
+
+    --secondary: #e8f7ee;
+    --secondary-foreground: #1a5c2a;
+
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+
+    --accent: #d1f0dd;
+    --accent-foreground: #1a5c2a;
+
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #2d8c4e;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: #090e0b;
+    --foreground: #fbfdfc;
+
+    --card: #121a14;
+    --card-foreground: #fbfdfc;
+
+    --popover: #121a14;
+    --popover-foreground: #fbfdfc;
+
+    --primary: #3dba6f;
+    --primary-foreground: #ffffff;
+
+    --secondary: #132a1b;
+    --secondary-foreground: #a3e0bb;
+
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+
+    --accent: #173623;
+    --accent-foreground: #d1f0dd;
+
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #3dba6f;
+  }
 }
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: var(--font-inter), system-ui, sans-serif;
-  background: #f4f9f5;
-  color: #1a2b1e;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 6px; }
 ::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: #a3e0bb; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #2d8c4e; }
+::-webkit-scrollbar-thumb  { background: var(--primary); border-radius: 99px; opacity: 0.7; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); opacity: 1; }
 
 /* ── Animations ────────────────────────────────────────────────────────── */
 @keyframes fadeIn  { from { opacity: 0 }              to { opacity: 1 } }

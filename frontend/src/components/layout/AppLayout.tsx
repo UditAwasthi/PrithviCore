@@ -47,10 +47,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-agri-50">
-        <div className="text-center space-y-3">
-          <div className="text-4xl animate-bounce">🌱</div>
-          <p className="text-agri-600 font-semibold">Loading PrithviCore…</p>
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <div className="text-center space-y-4">
+          <div className="text-5xl animate-bounce">🌿</div>
+          <p className="text-primary font-semibold text-lg tracking-tight">Loading PrithviCore…</p>
         </div>
       </div>
     );
@@ -59,12 +59,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors selection:bg-primary/20">
       <Navbar alerts={alerts} />
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 p-6 pb-12 overflow-y-auto animate-fade-in">
-          {children}
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto animate-fade-in custom-scrollbar bg-accent/20">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

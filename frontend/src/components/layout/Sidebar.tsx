@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Leaf, Bug, Lightbulb,
   FileBarChart, Settings, User, ChevronRight,
 } from 'lucide-react';
-import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/dashboard',       label: 'Dashboard',        icon: LayoutDashboard },
@@ -29,29 +29,28 @@ export default function Sidebar() {
     return (
       <Link
         href={href}
-        className={clsx(
-          'group flex items-center gap-3 px-4 py-2.5 rounded-xl mx-2 text-sm font-medium transition-all duration-150',
+        className={cn(
+          'group flex items-center gap-3 px-4 py-2.5 rounded-xl mx-2 text-sm font-medium transition-all duration-200',
           active
-            ? 'bg-agri-50 text-agri-700 font-semibold border-l-[3px] border-agri-600 pl-[13px]'
-            : 'text-gray-500 hover:bg-agri-50/60 hover:text-agri-700 border-l-[3px] border-transparent'
+            ? 'bg-primary text-primary-foreground shadow-sm'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
         )}
       >
-        <Icon size={17} className={clsx('flex-shrink-0', active ? 'text-agri-600' : 'text-gray-400 group-hover:text-agri-500')} />
+        <Icon size={18} className={cn('flex-shrink-0', active ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-accent-foreground')} />
         <span className="flex-1 truncate">{label}</span>
-        {active && <ChevronRight size={14} className="text-agri-400" />}
       </Link>
     );
   };
 
   return (
-    <aside className="w-[215px] bg-white border-r border-agri-100 flex flex-col sticky top-[62px] h-[calc(100vh-62px)] overflow-y-auto flex-shrink-0">
-      <div className="flex-1 py-4 space-y-0.5">
+    <aside className="w-[240px] bg-card border-r border-border flex flex-col sticky top-[62px] h-[calc(100vh-62px)] overflow-y-auto flex-shrink-0 transition-colors hidden md:flex z-40">
+      <div className="flex-1 py-6 space-y-1">
         {NAV_ITEMS.map(item => (
           <NavItem key={item.href} href={item.href} label={item.label} Icon={item.icon} />
         ))}
       </div>
 
-      <div className="py-4 border-t border-agri-100 space-y-0.5">
+      <div className="py-4 border-t border-border space-y-1">
         {BOTTOM_ITEMS.map(item => (
           <NavItem key={item.href} href={item.href} label={item.label} Icon={item.icon} />
         ))}
