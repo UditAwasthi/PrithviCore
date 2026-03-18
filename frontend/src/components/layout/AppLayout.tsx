@@ -59,9 +59,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors selection:bg-primary/20">
+    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors selection:bg-primary/20 relative z-0">
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background animate-in fade-in duration-1000" />
       <Navbar alerts={alerts} />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden z-10 w-full">
         <Sidebar />
         <main className="flex-1 p-6 md:p-8 overflow-y-auto animate-fade-in custom-scrollbar bg-accent/20">
           <div className="max-w-7xl mx-auto">

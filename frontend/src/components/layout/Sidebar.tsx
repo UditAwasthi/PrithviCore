@@ -43,7 +43,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-[240px] bg-card border-r border-border flex flex-col sticky top-[62px] h-[calc(100vh-62px)] overflow-y-auto flex-shrink-0 transition-colors hidden md:flex z-40">
+    <aside className="w-[240px] bg-background/60 backdrop-blur-xl border-r border-border/50 flex flex-col sticky top-[62px] h-[calc(100vh-62px)] overflow-y-auto flex-shrink-0 transition-colors hidden md:flex z-40">
       <div className="flex-1 py-6 space-y-1">
         {NAV_ITEMS.map(item => (
           <NavItem key={item.href} href={item.href} label={item.label} Icon={item.icon} />
