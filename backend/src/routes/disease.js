@@ -38,7 +38,10 @@ router.post('/disease-detection', protect, upload.single('image'), async (req, r
         `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/predict`,
         form,
         {
-          headers: { ...form.getHeaders() },
+          headers: { 
+            ...form.getHeaders(),
+            Authorization: req.headers.authorization 
+          },
           timeout: 30000,
         }
       );
