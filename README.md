@@ -168,7 +168,7 @@ npm install
 # Create .env file
 cat > .env << EOF
 PORT=5000
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/prithvicore
+MONGODB_URI=mongodb+srv://<your-username>:<your-password>@<your-cluster>.mongodb.net/prithvicore
 JWT_SECRET=your-secret-key-minimum-32-characters-here
 JWT_EXPIRES_IN=7d
 AI_SERVICE_URL=http://localhost:8000
