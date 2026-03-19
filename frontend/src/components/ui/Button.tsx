@@ -11,18 +11,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95 hover:scale-[1.02]",
+          "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]",
           {
-            "bg-gradient-to-r from-[#0B3D2E] to-[#14B8A6] text-white hover:shadow-lg hover:shadow-[#14B8A6]/20 border-0": variant === "default",
-            "bg-destructive text-destructive-foreground hover:bg-destructive/90": variant === "destructive",
-            "border-2 border-input bg-transparent hover:bg-accent hover:text-accent-foreground": variant === "outline",
-            "bg-secondary text-secondary-foreground hover:bg-secondary/80": variant === "secondary",
-            "hover:bg-accent hover:text-accent-foreground": variant === "ghost",
+            "bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:brightness-110 border-0": variant === "default",
+            "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30 hover:brightness-110": variant === "destructive",
+            "border border-border/60 bg-background/80 backdrop-blur-sm hover:bg-accent/50 hover:text-accent-foreground hover:border-primary/30 hover:shadow-md": variant === "outline",
+            "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm": variant === "secondary",
+            "hover:bg-accent/50 hover:text-accent-foreground": variant === "ghost",
             "text-primary underline-offset-4 hover:underline": variant === "link",
             "h-11 px-6 py-2": size === "default",
-            "h-9 rounded-md px-4": size === "sm",
+            "h-9 rounded-lg px-4 text-xs": size === "sm",
             "h-12 rounded-xl px-8 text-base": size === "lg",
-            "h-11 w-11 rounded-full": size === "icon",
+            "h-10 w-10 rounded-full p-0": size === "icon",
           },
           className
         )}

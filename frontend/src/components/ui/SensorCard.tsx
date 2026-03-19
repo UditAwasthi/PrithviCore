@@ -16,65 +16,83 @@ interface SensorCardProps {
   loading?: boolean;
 }
 
-const STATUS_BORDER_STYLES = {
-  optimal: 'border-b-[3px] border-b-primary shadow-sm shadow-primary/5',
-  warning: 'border-b-[3px] border-b-orange-400 shadow-sm shadow-orange-400/5',
-  danger:  'border-b-[3px] border-b-destructive shadow-sm shadow-destructive/5',
-  info:    'border-b-[3px] border-b-blue-400 shadow-sm shadow-blue-400/5',
-};
-
-const BADGE_STYLES = {
-  optimal: 'bg-primary/10 text-primary border border-primary/20',
-  warning: 'bg-orange-400/10 text-orange-600 dark:text-orange-400 border border-orange-400/20',
-  danger:  'bg-destructive/10 text-destructive border border-destructive/20',
-  info:    'bg-blue-400/10 text-blue-600 dark:text-blue-400 border border-blue-400/20',
+const STATUS_CONFIG = {
+  optimal: {
+    border: 'border-l-4 border-l-emerald-500',
+    glow: 'shadow-emerald-500/10',
+    badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+    dot: 'bg-emerald-500',
+  },
+  warning: {
+    border: 'border-l-4 border-l-amber-500',
+    glow: 'shadow-amber-500/10',
+    badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+    dot: 'bg-amber-500',
+  },
+  danger: {
+    border: 'border-l-4 border-l-red-500',
+    glow: 'shadow-red-500/10',
+    badge: 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20',
+    dot: 'bg-red-500',
+  },
+  info: {
+    border: 'border-l-4 border-l-sky-500',
+    glow: 'shadow-sky-500/10',
+    badge: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+    dot: 'bg-sky-500',
+  },
 };
 
 export default function SensorCard({
   label, value, unit, icon, status = 'info',
   statusLabel, trend, trendValue, loading,
 }: SensorCardProps) {
+  const cfg = STATUS_CONFIG[status];
+
   return (
-    <Card className={cn("overflow-hidden group transition-all duration-300 hover:shadow-md", STATUS_BORDER_STYLES[status])}>
-      <CardContent className={cn("p-5 h-full flex flex-col justify-between", loading && "animate-pulse")}>
+    <Card className={cn("overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 relative", cfg.border, cfg.glow)}>
+      {/* Subtle radial glow behind icon */}
+      <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 pointer-events-none -translate-y-1/3 translate-x-1/3", cfg.dot)} />
+
+      <CardContent className={cn("p-5 h-full flex flex-col justify-between relative z-10", loading && "animate-pulse")}>
         {/* Header */}
-        <div className="flex items-start justify-between mb-6 relative z-10">
-          <div className="text-2xl opacity-80 group-hover:scale-110 transition-transform duration-300 select-none bg-background p-2 rounded-xl shadow-sm border border-border/50">{icon}</div>
+        <div className="flex items-start justify-between mb-4">
+          <div className="text-2xl select-none bg-background/60 backdrop-blur-sm p-2.5 rounded-xl shadow-sm border border-border/30 group-hover:scale-110 transition-transform duration-300">{icon}</div>
           {statusLabel && (
-            <span className={cn('text-[10px] uppercase tracking-widest font-black px-2.5 py-1 rounded-full shadow-sm', BADGE_STYLES[status])}>
+            <span className={cn('text-[10px] uppercase tracking-widest font-black px-2.5 py-1 rounded-full', cfg.badge)}>
               {statusLabel}
             </span>
           )}
         </div>
 
         {/* Value */}
-        <div className="mb-2 relative z-10">
+        <div className="mb-1.5">
           {loading ? (
-            <div className="h-10 w-28 bg-muted rounded-md" />
+            <div className="h-10 w-28 bg-muted rounded-lg" />
           ) : (
             <div className="flex items-baseline gap-1.5">
-              <span className="text-4xl font-black tabular-nums tracking-tighter text-foreground drop-shadow-sm">
+              <span className="text-3xl font-black tabular-nums tracking-tighter text-foreground">
                 {value !== null && value !== undefined ? value.toFixed(unit === 'pH' ? 2 : 1) : '–'}
               </span>
-              <span className="text-sm font-bold text-muted-foreground">{unit}</span>
+              <span className="text-sm font-semibold text-muted-foreground">{unit}</span>
             </div>
           )}
         </div>
-        
-        {/* Background Sparkline (Dummy) */}
-        <svg className="absolute bottom-0 left-0 w-full h-1/2 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-500 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 50">
+
+        {/* Background Sparkline */}
+        <svg className="absolute bottom-0 left-0 w-full h-1/2 opacity-[0.04] group-hover:opacity-10 transition-opacity duration-500 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 50">
           <path d="M0,50 L0,30 C20,20 40,40 60,10 C80,-10 90,20 100,5 L100,50 Z" fill="currentColor" />
         </svg>
 
         {/* Label */}
-        <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
 
         {/* Trend */}
         {trend && trendValue && !loading && (
-          <div className="flex items-center gap-1 mt-3 text-xs font-medium text-muted-foreground/80">
-            {trend === 'up'     && <TrendingUp  size={14} className="text-primary" />}
-            {trend === 'down'   && <TrendingDown size={14} className="text-destructive" />}
-            {trend === 'stable' && <Minus        size={14} className="text-primary/70" />}
+          <div className="flex items-center gap-1 mt-2 text-xs font-medium text-muted-foreground/80">
+            {trend === 'up'     && <TrendingUp  size={14} className="text-emerald-500" />}
+            {trend === 'down'   && <TrendingDown size={14} className="text-red-500" />}
+            {trend === 'stable' && <Minus        size={14} className="text-sky-500" />}
             <span>{trendValue}</span>
           </div>
         )}

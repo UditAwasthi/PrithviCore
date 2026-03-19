@@ -5,61 +5,78 @@
 @layer base {
   :root {
     --font-inter: 'Inter', sans-serif;
-    
-    /* Default (Light Mode) */
-    --background: #fbfdfc;
-    --foreground: #090e0b;
+
+    /* ── Light Mode ─────────────────────────────────────── */
+    --background: #f8faf9;
+    --foreground: #0a1210;
 
     --card: #ffffff;
-    --card-foreground: #090e0b;
+    --card-foreground: #0a1210;
 
     --popover: #ffffff;
-    --popover-foreground: #090e0b;
+    --popover-foreground: #0a1210;
 
-    --primary: #2d8c4e;
+    --primary: #10b981;
     --primary-foreground: #ffffff;
 
-    --secondary: #e8f7ee;
-    --secondary-foreground: #1a5c2a;
+    --secondary: #ecfdf5;
+    --secondary-foreground: #065f46;
 
     --muted: #f1f5f9;
     --muted-foreground: #64748b;
 
-    --accent: #d1f0dd;
-    --accent-foreground: #1a5c2a;
+    --accent: #d1fae5;
+    --accent-foreground: #065f46;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
 
     --border: #e2e8f0;
     --input: #e2e8f0;
-    --ring: #2d8c4e;
+    --ring: #10b981;
 
     --radius: 0.75rem;
+
+    /* Glow tokens */
+    --glow-primary: rgba(16, 185, 129, 0.15);
+    --glow-accent: rgba(6, 182, 212, 0.12);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.3);
   }
 
   .dark {
-    --background: #090e0b;
-    --foreground: #fbfdfc;
+    --background: #050d09;
+    --foreground: #f0fdf4;
 
-    --card: #121a14;
-    --card-foreground: #fbfdfc;
+    --card: #0c1a12;
+    --card-foreground: #f0fdf4;
 
-    --popover: #121a14;
-    --popover-foreground: #fbfdfc;
+    --popover: #0c1a12;
+    --popover-foreground: #f0fdf4;
 
-    --primary: #3dba6f;
-    --primary-foreground: #ffffff;
+    --primary: #34d399;
+    --primary-foreground: #022c22;
 
-    --secondary: #132a1b;
-    --secondary-foreground: #a3e0bb;
+    --secondary: #0d2818;
+    --secondary-foreground: #a7f3d0;
 
-    --muted: #1e293b;
+    --muted: #162520;
     --muted-foreground: #94a3b8;
 
-    --accent: #173623;
-    --accent-foreground: #d1f0dd;
+    --accent: #0d3320;
+    --accent-foreground: #a7f3d0;
 
-    --border: #1e293b;
-    --input: #1e293b;
-    --ring: #3dba6f;
+    --destructive: #f87171;
+    --destructive-foreground: #1c1917;
+
+    --border: #1e3a2a;
+    --input: #1e3a2a;
+    --ring: #34d399;
+
+    --glow-primary: rgba(52, 211, 153, 0.12);
+    --glow-accent: rgba(6, 182, 212, 0.08);
+    --glass-bg: rgba(12, 26, 18, 0.6);
+    --glass-border: rgba(52, 211, 153, 0.08);
   }
 }
 
@@ -75,19 +92,98 @@
   }
 }
 
-/* ── Scrollbar ─────────────────────────────────────────────────────────── */
-::-webkit-scrollbar        { width: 6px; }
-::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: var(--primary); border-radius: 99px; opacity: 0.7; }
-::-webkit-scrollbar-thumb:hover { background: var(--primary); opacity: 1; }
+/* ── Glass Utility ─────────────────────────────────────────── */
+@layer utilities {
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
 
-/* ── Animations ────────────────────────────────────────────────────────── */
+  .glass-strong {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 30px var(--glow-primary), 0 0 60px var(--glow-primary);
+  }
+
+  .glow-sm {
+    box-shadow: 0 0 15px var(--glow-primary);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, var(--primary), #06b6d4, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .mesh-gradient {
+    background: 
+      radial-gradient(ellipse at 20% 50%, var(--glow-primary) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, var(--glow-accent) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+  }
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--primary); border-radius: 99px; opacity: 0.5; }
+::-webkit-scrollbar-thumb:hover { opacity: 1; }
+
+/* ── Selection ─────────────────────────────────────────────── */
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* ── Animations ────────────────────────────────────────────── */
 @keyframes fadeIn  { from { opacity: 0 }              to { opacity: 1 } }
 @keyframes slideUp { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+@keyframes slideInLeft  { from { transform: translateX(-20px); opacity: 0 } to { transform: translateX(0); opacity: 1 } }
+@keyframes slideInRight { from { transform: translateX(20px); opacity: 0 }  to { transform: translateX(0); opacity: 1 } }
 
-.animate-fade-in  { animation: fadeIn  0.3s ease both; }
-.animate-slide-up { animation: slideUp 0.35s ease both; }
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 
-/* ── Chart tooltip ─────────────────────────────────────────────────────── */
-.recharts-tooltip-wrapper { border-radius: 10px !important; }
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 15px var(--glow-primary); }
+  50%      { box-shadow: 0 0 30px var(--glow-primary), 0 0 60px var(--glow-primary); }
+}
 
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(52, 211, 153, 0.2); }
+  50%      { border-color: rgba(52, 211, 153, 0.5); }
+}
+
+.animate-fade-in       { animation: fadeIn 0.3s ease both; }
+.animate-slide-up      { animation: slideUp 0.35s ease both; }
+.animate-slide-in-left { animation: slideInLeft 0.35s ease both; }
+.animate-slide-in-right{ animation: slideInRight 0.35s ease both; }
+.animate-shimmer       { animation: shimmer 2s linear infinite; background-size: 200% 100%; }
+.animate-glow-pulse    { animation: glowPulse 3s ease-in-out infinite; }
+.animate-float         { animation: float 4s ease-in-out infinite; }
+.animate-gradient      { animation: gradientShift 6s ease infinite; background-size: 200% 200%; }
+.animate-border-glow   { animation: borderGlow 3s ease-in-out infinite; }
+
+/* ── Chart tooltip ─────────────────────────────────────────── */
+.recharts-tooltip-wrapper { border-radius: 12px !important; }
