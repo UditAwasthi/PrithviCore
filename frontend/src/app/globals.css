@@ -7,33 +7,33 @@
     --font-inter: 'Inter', sans-serif;
 
     /* ── Light Mode ─────────────────────────────────────── */
-    --background: #f8faf9;
-    --foreground: #0a1210;
+    --background: 248 250 249;
+    --foreground: 10 18 16;
 
-    --card: #ffffff;
-    --card-foreground: #0a1210;
+    --card: 255 255 255;
+    --card-foreground: 10 18 16;
 
-    --popover: #ffffff;
-    --popover-foreground: #0a1210;
+    --popover: 255 255 255;
+    --popover-foreground: 10 18 16;
 
-    --primary: #10b981;
-    --primary-foreground: #ffffff;
+    --primary: 16 185 129;
+    --primary-foreground: 255 255 255;
 
-    --secondary: #ecfdf5;
-    --secondary-foreground: #065f46;
+    --secondary: 236 253 245;
+    --secondary-foreground: 6 95 70;
 
-    --muted: #f1f5f9;
-    --muted-foreground: #64748b;
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
 
-    --accent: #d1fae5;
-    --accent-foreground: #065f46;
+    --accent: 209 250 229;
+    --accent-foreground: 6 95 70;
 
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
 
-    --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #10b981;
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 16 185 129;
 
     --radius: 0.75rem;
 
@@ -45,33 +45,33 @@
   }
 
   .dark {
-    --background: #06120b;
-    --foreground: #f8fafc;
+    --background: 6 18 11;
+    --foreground: 248 250 252;
 
-    --card: #0d2417;
-    --card-foreground: #f8fafc;
+    --card: 13 36 23;
+    --card-foreground: 248 250 252;
 
-    --popover: #0d2417;
-    --popover-foreground: #f8fafc;
+    --popover: 13 36 23;
+    --popover-foreground: 248 250 252;
 
-    --primary: #10b981;
-    --primary-foreground: #ffffff;
+    --primary: 16 185 129;
+    --primary-foreground: 255 255 255;
 
-    --secondary: #1a3b29;
-    --secondary-foreground: #a7f3d0;
+    --secondary: 26 59 41;
+    --secondary-foreground: 167 243 208;
 
-    --muted: #1e3629;
-    --muted-foreground: #94a3b8;
+    --muted: 30 54 41;
+    --muted-foreground: 148 163 184;
 
-    --accent: #19402c;
-    --accent-foreground: #34d399;
+    --accent: 25 64 44;
+    --accent-foreground: 52 211 153;
 
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
 
-    --border: #1e4a31;
-    --input: #123321;
-    --ring: #10b981;
+    --border: 30 74 49;
+    --input: 18 51 33;
+    --ring: 16 185 129;
 
     --glow-primary: rgba(16, 185, 129, 0.25);
     --glow-accent: rgba(6, 182, 212, 0.25);

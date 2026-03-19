@@ -125,9 +125,9 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center gap-3 my-6">
-                <div className="flex-1 h-px bg-border/50 dark:bg-emerald-500/15" />
+                <div className="flex-1 h-px bg-border dark:bg-emerald-500/15" />
                 <span className="text-xs text-foreground/50 dark:text-foreground/60 font-semibold uppercase tracking-wider">Or</span>
-                <div className="flex-1 h-px bg-border/50 dark:bg-emerald-500/15" />
+                <div className="flex-1 h-px bg-border dark:bg-emerald-500/15" />
               </div>
 
               <form onSubmit={handleSubmit} noValidate className="space-y-4">
