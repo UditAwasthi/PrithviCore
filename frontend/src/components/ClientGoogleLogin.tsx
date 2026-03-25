@@ -30,18 +30,6 @@ function GoogleIcon() {
 function GoogleButtonWithProvider({ onSuccess, onError, text = 'Sign in with Google' }: ClientGoogleLoginProps) {
   const [loading, setLoading] = useState(false);
 
-  const googleLogin = useGoogleLogin({
-    flow: 'auth-code',
-    onSuccess: async (codeResponse) => {
-      // For auth-code flow we'd need backend exchange; use implicit instead
-      console.log('Google auth code:', codeResponse);
-    },
-    onError: () => {
-      setLoading(false);
-      onError?.();
-    },
-  });
-
   // Use implicit flow instead for direct credential
   const googleLoginImplicit = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -79,17 +67,22 @@ function GoogleButtonWithProvider({ onSuccess, onError, text = 'Sign in with Goo
 
 function GoogleButtonFallback({ text = 'Sign in with Google' }: { text?: string }) {
   return (
-    <button
-      type="button"
-      onClick={() => alert('Google Login is not configured yet. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment variables.')}
-      className="w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700
-                 hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98]
-                 transition-all shadow-sm
-                 flex items-center justify-center gap-3"
-    >
-      <GoogleIcon />
-      {text}
-    </button>
+    <div className="space-y-2">
+      <button
+        type="button"
+        disabled
+        className="w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700
+                   opacity-60 cursor-not-allowed
+                   transition-all shadow-sm
+                   flex items-center justify-center gap-3"
+      >
+        <GoogleIcon />
+        {text}
+      </button>
+      <p className="text-[11px] text-foreground/60 dark:text-foreground/70 leading-snug text-center">
+        Google sign-in is disabled until you set <span className="font-semibold">NEXT_PUBLIC_GOOGLE_CLIENT_ID</span>.
+      </p>
+    </div>
   );
 }
 

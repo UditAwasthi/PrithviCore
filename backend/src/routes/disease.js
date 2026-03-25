@@ -32,22 +32,55 @@ router.post('/disease-detection', protect, upload.single('image'), async (req, r
       contentType: req.file.mimetype,
     });
 
+    const aiServiceUrl = `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/predict`;
     let aiResult;
-    try {
-      const aiResponse = await axios.post(
-        `${process.env.AI_SERVICE_URL || 'http://localhost:8000'}/predict`,
-        form,
-        {
-          headers: { 
-            ...form.getHeaders(),
-            Authorization: req.headers.authorization 
-          },
-          timeout: 30000,
-        }
-      );
-      aiResult = aiResponse.data;
-    } catch (aiErr) {
-      console.error('[AI SERVICE ERROR]', aiErr.message);
+    const maxAttempts = 3;
+    let lastAiErr;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const aiResponse = await axios.post(
+          aiServiceUrl,
+          form,
+          {
+            headers: {
+              ...form.getHeaders(),
+              Authorization: req.headers.authorization,
+            },
+            // Render cold starts can take a bit; keep this high enough to avoid false 503s.
+            timeout: 120000,
+          }
+        );
+        aiResult = aiResponse.data;
+        break;
+      } catch (aiErr) {
+        lastAiErr = aiErr;
+        const status = aiErr.response?.status;
+        const code = aiErr.code;
+
+        const retriableStatus = [502, 503, 504].includes(status);
+        const retriableCode = [
+          'ETIMEDOUT',
+          'ECONNRESET',
+          'ECONNREFUSED',
+          'ENOTFOUND',
+          'EAI_AGAIN',
+        ].includes(code);
+
+        const shouldRetry = attempt < maxAttempts && (retriableStatus || retriableCode || !status);
+        if (!shouldRetry) break;
+
+        // Exponential backoff: 2s, 4s ...
+        const delayMs = Math.pow(2, attempt) * 500;
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+
+    if (!aiResult) {
+      console.error('[AI SERVICE ERROR]', lastAiErr?.message, {
+        code: lastAiErr?.code,
+        status: lastAiErr?.response?.status,
+      });
       return res.status(503).json({
         error: 'AI service unavailable. Please ensure the AI microservice is running.',
       });
