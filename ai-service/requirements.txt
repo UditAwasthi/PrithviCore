@@ -8,3 +8,5 @@ torchvision>=0.16.2
 transformers>=4.37.2
 python-dotenv==1.0.1
 httpx==0.26.0
+PyJWT
+slowapi

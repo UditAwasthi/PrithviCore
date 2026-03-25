@@ -1,13 +1,6 @@
 # 🌱 PrithviCore — AI-Powered Smart Farming Platform
 
-[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)](https://vercel.com)
-[![Render](https://img.shields.io/badge/Backend-Render-46E3B7?logo=render)](https://render.com)
-[![MongoDB](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?logo=mongodb)](https://mongodb.com/atlas)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
 A production-ready, full-stack IoT farm monitoring platform featuring **real-time soil analytics**, **AI-powered plant disease detection**, **weather integration**, and **automated agronomic recommendations** — built for Indian farmers.
-
-> **Live:** [https://prithvicore.com](https://prithvicore.com)
 
 ---
 
@@ -138,79 +131,6 @@ PrithviCore/
 
 ---
 
-## 🚀 Quick Start (Local Development)
-
-### Prerequisites
-- **Node.js** 18+ and npm
-- **Python** 3.10+ and pip
-- **MongoDB Atlas** free account ([mongodb.com/atlas](https://mongodb.com/atlas))
-- **OpenWeatherMap** API key ([openweathermap.org](https://openweathermap.org/api))
-
-### Option A: Docker Compose (Recommended)
-
-```bash
-git clone https://github.com/SunilMaurya-18/AgriDrishti-Project.git
-cd AgriDrishti-Project
-
-docker-compose up --build
-# Frontend:  http://localhost:3000
-# Backend:   http://localhost:5000
-# AI:        http://localhost:8000
-```
-
-### Option B: Manual Setup
-
-#### 1. Backend
-```bash
-cd backend
-npm install
-
-# Create .env file
-cat > .env << EOF
-PORT=5000
-MONGODB_URI=mongodb+srv://<your-username>:<your-password>@<your-cluster>.mongodb.net/prithvicore
-JWT_SECRET=your-secret-key-minimum-32-characters-here
-JWT_EXPIRES_IN=7d
-AI_SERVICE_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:3000
-GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-NODE_ENV=development
-EOF
-
-npm run dev
-# ✅ Backend at http://localhost:5000
-```
-
-#### 2. AI Service
-```bash
-cd ai-service
-pip install -r requirements.txt
-
-# Create .env file
-echo "JWT_SECRET=your-secret-key-minimum-32-characters-here" > .env
-
-python main.py
-# ✅ AI Service at http://localhost:8000 (mock mode without model_weights.pth)
-```
-
-> **Note:** Without `model_weights.pth`, the AI runs in **mock mode** (returns random predictions). To get real predictions, train a ResNet50 on the [PlantVillage dataset](https://www.kaggle.com/datasets/emmarex/plantdisease) and save weights as `ai-service/model_weights.pth`.
-
-#### 3. Frontend
-```bash
-cd frontend
-npm install
-
-# Create .env.local
-cat > .env.local << EOF
-NEXT_PUBLIC_API_URL=http://localhost:5000
-NEXT_PUBLIC_WS_URL=ws://localhost:5000
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-NEXT_PUBLIC_OWM_KEY=your-openweathermap-api-key
-EOF
-
-npm run dev
-# ✅ Frontend at http://localhost:3000
-```
 
 ##### Vercel setup (Google Login)
 If you deploy to Vercel and want “Sign in with Google” to work, set the following in your Vercel project:
@@ -226,58 +146,6 @@ Without this variable, the UI will render the Google sign-in option as disabled.
 5. Flash to ESP32
 
 ---
-
-## 🔌 API Reference
-
-### Authentication
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/api/auth/signup` | — | Create account (name, email, password, farm details) |
-| `POST` | `/api/auth/login` | — | Login with email + password, returns JWT |
-| `POST` | `/api/auth/google` | — | Google OAuth login/signup |
-| `GET` | `/api/auth/me` | JWT | Get current user profile |
-| `PUT` | `/api/auth/profile` | JWT | Update name, farm location, farm size |
-| `PUT` | `/api/auth/password` | JWT | Change password |
-| `POST` | `/api/auth/send-otp` | — | Send OTP to phone number |
-| `POST` | `/api/auth/verify-otp` | JWT | Verify phone OTP |
-
-### Sensor Data
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/api/sensor-data` | API Key | ESP32 pushes sensor readings |
-| `GET` | `/api/soil/latest` | JWT | Latest sensor reading |
-| `GET` | `/api/soil/history` | JWT | Historical data with daily averages |
-| `GET` | `/api/sensor/stats` | JWT | 24h aggregated statistics |
-
-### Disease Detection
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/api/disease-detection` | JWT | Upload leaf image → AI prediction |
-| `GET` | `/api/disease-history` | JWT | Past scan results (paginated) |
-
-### Dashboard & Intelligence
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/api/dashboard` | JWT | Full dashboard (stats, trends, recommendations) |
-| `GET` | `/api/recommendations` | JWT | Farming recommendations from sensor data |
-| `GET` | `/api/weather` | JWT | Weather data from OpenWeatherMap |
-| `GET` | `/api/reports` | JWT | Farm report data |
-| `GET` | `/api/reports/download` | JWT | Download PDF report |
-
-### AI Service (Internal)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/predict` | JWT | Image → disease prediction (called by backend) |
-| `GET` | `/health` | — | Service health check |
-| `GET` | `/classes` | — | List all 38 disease classes |
-
----
-
 ## 🧠 AI Disease Detection
 
 ### Model
@@ -320,6 +188,7 @@ Automated farming recommendations are generated by analyzing real-time sensor da
 | Potassium < 30 mg/kg | 🟡 Medium | Apply MOP fertilizer |
 | Humidity > 85% | 🟡 Medium | Apply preventive fungicide |
 
+<<<<<<< HEAD
 ---
 
 ## 🔒 Security
@@ -467,6 +336,8 @@ MIT License — free for personal and commercial use.
 
 ---
 
+=======
+>>>>>>> f7745a58b406d7a4538d8e74fcac71d1e5793590
 ## 👨‍💻 Author
 
 **Sunil Maurya** — [GitHub](https://github.com/SunilMaurya-18)
