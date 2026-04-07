@@ -60,7 +60,8 @@ app.add_middleware(
         "https://prithvicore.com",
         "https://www.prithvicore.com",
         "http://localhost:3000",
-        "https://agri-drishti-project-sunilmaurya-18s-projects.vercel.app"
+        "https://agri-drishti-project-sunilmaurya-18s-projects.vercel.app",
+        "https://prithvicore.vercel.app/disease"
     ],
     allow_methods=["*"],
     allow_headers=["*"],

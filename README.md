@@ -129,15 +129,6 @@ PrithviCore/
 | Database | MongoDB Atlas | Free 512MB, managed backups, global |
 | Domain | prithvicore.com | Unified via Vercel rewrites |
 
----
-
-
-##### Vercel setup (Google Login)
-If you deploy to Vercel and want “Sign in with Google” to work, set the following in your Vercel project:
-- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` = `your-google-client-id.apps.googleusercontent.com`
-
-Without this variable, the UI will render the Google sign-in option as disabled.
-
 #### 4. Hardware (Optional)
 1. Open `hardware/esp32_firmware.ino` in **Arduino IDE**
 2. Install libraries: `DHT sensor library` (Adafruit), `ArduinoJson` (Blanchon)
