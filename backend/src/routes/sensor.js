@@ -47,7 +47,9 @@ router.post('/sensor-data', deviceAuth, async (req, res) => {
 // ─── GET /api/soil/history ───────────────────────────────
 router.get('/soil/history', protect, async (req, res) => {
   try {
-    const { from, to, limit = 100, device_id } = req.query;
+    const { from, to, page = 1, limit = 10, device_id } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const maxLimit = Math.min(parseInt(limit), 100);
 
     const filter = {};
     if (device_id) filter.device_id = device_id;
@@ -61,13 +63,16 @@ router.get('/soil/history', protect, async (req, res) => {
       filter.timestamp = { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
     }
 
+    const totalCount = await SensorData.countDocuments(filter);
+    
     const history = await SensorData
       .find(filter)
       .sort({ timestamp: -1 })
-      .limit(Math.min(parseInt(limit), 500))
+      .skip(skip)
+      .limit(maxLimit)
       .lean();
 
-    // Aggregate daily averages
+    // Aggregate daily averages (Keep as is, usually for charts)
     const dailyAverages = await SensorData.aggregate([
       { $match: filter },
       {
@@ -94,10 +99,17 @@ router.get('/soil/history', protect, async (req, res) => {
     res.json({
       readings: history,
       daily_averages: dailyAverages,
-      count: history.length,
+      pagination: {
+        total: totalCount,
+        page: parseInt(page),
+        limit: maxLimit,
+        totalPages: Math.ceil(totalCount / maxLimit),
+        hasNextPage: skip + history.length < totalCount,
+      }
     });
   } catch (err) {
-    console.error('[SOIL HISTORY ERROR]', err);
+    const logger = require('../utils/logger');
+    logger.error('[SOIL HISTORY ERROR]', err);
     res.status(500).json({ error: 'Failed to fetch soil history' });
   }
 });

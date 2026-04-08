@@ -1,9 +1,10 @@
-'use client';
-
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Eye, EyeOff, Loader, ArrowLeft, Leaf } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { AxiosError } from 'axios';
@@ -11,6 +12,13 @@ import ClientGoogleLogin from '@/components/ClientGoogleLogin';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
+
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type FormData = z.infer<typeof loginSchema>;
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof AxiosError) {
@@ -25,24 +33,23 @@ export default function LoginPage() {
   const { login, googleLogin } = useAuth();
   const router = useRouter();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
-  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
   const toggleShowPw = () => setShowPw((prev) => !prev);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!email.trim() || !password) {
-      toast.error('Please enter your email and password.');
-      return;
-    }
+  const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(data.email.trim(), data.password);
       toast.success('Welcome back! 🌱');
       router.push('/dashboard');
     } catch (err: unknown) {
@@ -130,10 +137,11 @@ export default function LoginPage() {
                 <div className="flex-1 h-px bg-border dark:bg-emerald-500/15" />
               </div>
 
-              <form onSubmit={handleSubmit} noValidate className="space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
                 <div className="space-y-1.5">
                   <label htmlFor="login-email" className="text-sm font-medium text-foreground">Email</label>
-                  <Input id="login-email" type="email" autoComplete="email" value={email} onChange={handleEmailChange} required placeholder="name@example.com" />
+                  <Input id="login-email" type="email" autoComplete="email" {...register('email')} required placeholder="name@example.com" />
+                  {errors.email && <p className="text-xs text-destructive font-medium mt-1">{errors.email.message}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -142,11 +150,12 @@ export default function LoginPage() {
                     <Link href="#" className="text-xs text-primary hover:underline font-medium">Forgot?</Link>
                   </label>
                   <div className="relative">
-                    <Input id="login-password" type={showPw ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={handlePasswordChange} required placeholder="••••••••" className="pr-10" />
+                    <Input id="login-password" type={showPw ? 'text' : 'password'} autoComplete="current-password" {...register('password')} required placeholder="••••••••" className="pr-10" />
                     <button type="button" onClick={toggleShowPw} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 dark:text-foreground/60 hover:text-foreground transition-colors">
                       {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                  {errors.password && <p className="text-xs text-destructive font-medium mt-1">{errors.password.message}</p>}
                 </div>
 
                 <Button type="submit" disabled={loading} className="w-full h-11 text-sm font-semibold mt-2 shadow-lg">
@@ -165,3 +174,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

@@ -55,7 +55,6 @@ export interface User {
 
 interface AuthContextValue {
   user: User | null;
-  token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (data: SignupPayload) => Promise<void>;
@@ -73,22 +72,13 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // Provider
 // ---------------------------------------------------------------------------
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user,    setUser]    = useState<User | null>(() => userCache.get());
-  const [token,   setToken]   = useState<string | null>(() => tokenHelpers.get());
-  // Start loading=false if we already have a cached user so the app shows instantly
-  const [loading, setLoading] = useState(() => !userCache.get() && !!tokenHelpers.get());
+  const [user, setUser] = useState<User | null>(() => userCache.get());
+  const [loading, setLoading] = useState(true);
 
   // Rehydrate & verify session on first mount (client-only)
   useEffect(() => {
-    const saved = tokenHelpers.get();
-    if (!saved) {
-      setLoading(false);
-      userCache.remove();
-      return;
-    }
-
-    // If we already loaded a cached user, verify silently in the background
-    // (don't block the UI with a loading spinner)
+    // We call /me regardless of cached user to ensure the session is still valid
+    // via the httpOnly cookie.
     authAPI
       .me()
       .then((res) => {
@@ -97,10 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userCache.set(freshUser);
       })
       .catch(() => {
-        // Token is invalid / expired — clean up everything
-        tokenHelpers.remove();
+        // Session is invalid / expired / missing
         userCache.remove();
-        setToken(null);
         setUser(null);
       })
       .finally(() => setLoading(false));
@@ -109,38 +97,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ------------------------------------------------------------------
   const login = async (email: string, password: string): Promise<void> => {
     const res = await authAPI.login({ email, password });
-    const { token: t, user: u } = res.data as { token: string; user: User };
-    tokenHelpers.set(t);
+    const { user: u } = res.data as { user: User };
     userCache.set(u);
-    setToken(t);
     setUser(u);
   };
 
   const signup = async (data: SignupPayload): Promise<void> => {
     const res = await authAPI.signup(data);
-    const { token: t, user: u } = res.data as { token: string; user: User };
-    tokenHelpers.set(t);
+    const { user: u } = res.data as { user: User };
     userCache.set(u);
-    setToken(t);
     setUser(u);
   };
 
   const googleLogin = async (credential: string): Promise<void> => {
     const res = await authAPI.googleLogin(credential);
-    const { token: t, user: u } = res.data as { token: string; user: User };
-    tokenHelpers.set(t);
+    const { user: u } = res.data as { user: User };
     userCache.set(u);
-    setToken(t);
     setUser(u);
   };
 
-  const logout = (): void => {
-    tokenHelpers.remove();
-    userCache.remove();
-    setToken(null);
-    setUser(null);
-    // Hard redirect so all query caches and state are cleared
-    window.location.href = '/login';
+  const logout = () => {
+    authAPI.logout().finally(() => {
+      userCache.remove();
+      setUser(null);
+      // Hard redirect so all query caches and state are cleared
+      window.location.href = '/login';
+    });
   };
 
   const updateUser = (u: User): void => setUser(u);
@@ -148,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ------------------------------------------------------------------
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, signup, googleLogin, logout, updateUser }}
+      value={{ user, loading, login, signup, googleLogin, logout, updateUser }}
     >
       {children}
     </AuthContext.Provider>

@@ -7,11 +7,15 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { cn } from '@/lib/utils';
+import NotificationDrawer from '@/components/ui/NotificationDrawer';
 
 interface Alert { id: string; message: string; time: string; type: string; }
-interface NavbarProps { alerts?: Alert[]; }
+interface NavbarProps { 
+  alerts?: Alert[]; 
+  onClearAlerts?: () => void;
+}
 
-export default function Navbar({ alerts = [] }: NavbarProps) {
+export default function Navbar({ alerts = [], onClearAlerts }: NavbarProps) {
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen,   setNotifOpen]   = useState(false);
@@ -47,7 +51,7 @@ export default function Navbar({ alerts = [] }: NavbarProps) {
         {/* Notifications */}
         <div className="relative">
           <button
-            onClick={() => { setNotifOpen((v) => !v); setProfileOpen(false); }}
+            onClick={() => { setNotifOpen(true); setProfileOpen(false); }}
             aria-label="Notifications"
             className="relative h-10 w-10 flex items-center justify-center rounded-full border border-border/30 bg-background/60 backdrop-blur-sm hover:bg-accent/50 hover:border-primary/30 text-foreground transition-all duration-300"
           >
@@ -58,29 +62,16 @@ export default function Navbar({ alerts = [] }: NavbarProps) {
               </span>
             )}
           </button>
-          {notifOpen && (
-            <div className="absolute top-12 right-0 w-80 bg-popover/95 backdrop-blur-xl text-popover-foreground rounded-2xl shadow-2xl border border-border/30 p-4 animate-slide-up ring-1 ring-white/10">
-              <h4 className="font-bold text-sm pb-2 border-b border-border/30 mb-2">Notifications</h4>
-              {alerts.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">No new alerts</p>
-              ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {alerts.map((a) => (
-                    <div key={a.id} className="flex gap-3 items-start py-2 border-b border-border/20 last:border-0">
-                      <span className={cn(
-                        "mt-1.5 w-2 h-2 rounded-full flex-shrink-0",
-                        a.type === 'critical' ? 'bg-red-500' : a.type === 'high' ? 'bg-orange-500' : 'bg-sky-500'
-                      )} />
-                      <div>
-                        <p className="text-xs leading-snug text-foreground">{a.message}</p>
-                        <p className="text-[10px] text-muted-foreground mt-1">{a.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          
+          <NotificationDrawer 
+            isOpen={notifOpen}
+            onClose={() => setNotifOpen(false)}
+            notifications={alerts}
+            onClearAll={() => {
+              onClearAlerts?.();
+              setNotifOpen(false);
+            }}
+          />
         </div>
 
         {/* Profile */}
@@ -117,3 +108,4 @@ export default function Navbar({ alerts = [] }: NavbarProps) {
     </nav>
   );
 }
+

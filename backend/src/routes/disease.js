@@ -126,26 +126,33 @@ router.post('/disease-detection', protect, upload.single('image'), async (req, r
 // ─── GET /api/disease-history ────────────────────────────
 router.get('/disease-history', protect, async (req, res) => {
   try {
-    const { limit = 20, page = 1 } = req.query;
+    const { limit = 10, page = 1 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    const maxLimit = Math.min(parseInt(limit), 100);
 
-    const [results, total] = await Promise.all([
+    const [results, totalCount] = await Promise.all([
       DiseaseResult
         .find({ user: req.user._id })
         .sort({ timestamp: -1 })
         .skip(skip)
-        .limit(parseInt(limit))
+        .limit(maxLimit)
         .lean(),
       DiseaseResult.countDocuments({ user: req.user._id }),
     ]);
 
     res.json({
       results,
-      total,
-      page: parseInt(page),
-      pages: Math.ceil(total / parseInt(limit)),
+      pagination: {
+        total: totalCount,
+        page: parseInt(page),
+        limit: maxLimit,
+        totalPages: Math.ceil(totalCount / maxLimit),
+        hasNextPage: skip + results.length < totalCount,
+      }
     });
   } catch (err) {
+    const logger = require('../utils/logger');
+    logger.error('[DISEASE HISTORY ERROR]', err);
     res.status(500).json({ error: 'Failed to fetch disease history' });
   }
 });

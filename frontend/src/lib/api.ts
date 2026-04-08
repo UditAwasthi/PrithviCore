@@ -40,14 +40,17 @@ export const tokenHelpers = {
 // ---------------------------------------------------------------------------
 export const api = axios.create({
   baseURL: `${API_URL}/api`,
-  timeout: 120_000, // Increased to 120s to accommodate Render free-tier cold starts
+  timeout: 120_000, 
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // Crucial for httpOnly cookies
 });
 
 // Attach JWT on every outgoing request
+// JWT is now handled automatically by the browser via httpOnly cookies.
+// We keep the interceptor for backward compatibility with 3rd party APIs if needed.
 api.interceptors.request.use((config) => {
   const token = tokenHelpers.get();
-  if (token) {
+  if (token && !config.withCredentials) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -100,6 +103,7 @@ export const authAPI = {
   sendOtp:     (phone: string)       => api.post('/auth/send-otp', { phone }),
   verifyOtp:   (phone: string, otp: string) => api.post('/auth/verify-otp', { phone, otp }),
   me:          ()                    => api.get('/auth/me'),
+  logout:      ()                    => api.post('/auth/logout'),
   profile:     (data: object)        => api.put('/auth/profile', data),
   password:    (data: object)        => api.put('/auth/password', data),
 };

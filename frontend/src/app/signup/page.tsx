@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useCallback, type ChangeEvent, type FormEvent } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Eye, EyeOff, Loader, Phone, CheckCircle, ArrowLeft, Leaf } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { AxiosError } from 'axios';
@@ -14,73 +17,48 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
 
+interface FormData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  phone: string;
+  farm_size_acres: string;
+  country: string;
+  state: string;
+  city: string;
+}
+
+const signupSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string(),
+  phone: z.string().default(''),
+  farm_size_acres: z.string().default(''),
+  country: z.string().default('India'),
+  state: z.string().default(''),
+  city: z.string().default(''),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 function getErrorMessage(err: unknown): string {
   if (err instanceof AxiosError) {
     const msg = err.response?.data?.error as string | undefined;
     if (msg) return msg;
-    if (!err.response) return 'Cannot reach the server. Check your connection.';
   }
   return 'Signup failed. Please try again.';
 }
-
-interface FormFieldProps {
-  id: string; label: string; type?: string; value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  placeholder?: string; required?: boolean; autoComplete?: string; minLength?: number;
-  extra?: React.ReactNode;
-}
-
-function FormField({ id, label, type = 'text', value, onChange, placeholder, required, autoComplete, minLength, extra }: FormFieldProps) {
-  return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-foreground">
-        {label} {required && <span className="text-destructive inline-block ml-0.5">*</span>}
-      </label>
-      <div className="relative">
-        <Input
-          id={id} type={type} value={value} onChange={onChange}
-          placeholder={placeholder} required={required} autoComplete={autoComplete} minLength={minLength}
-          className={extra ? 'pr-11' : ''}
-        />
-        {extra && <div className="absolute right-3 top-1/2 -translate-y-1/2">{extra}</div>}
-      </div>
-    </div>
-  );
-}
-
-interface FormState {
-  name: string; email: string; password: string; confirmPassword: string;
-  phone: string; farm_size_acres: string; city: string; state: string; country: string;
-}
-
-const INITIAL_FORM: FormState = { name: '', email: '', password: '', confirmPassword: '', phone: '', farm_size_acres: '', city: '', state: '', country: 'India' };
 
 export default function SignupPage() {
   const { signup, googleLogin } = useAuth();
   const router = useRouter();
 
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedStateCode, setSelectedStateCode] = useState('');
-
-  const getCountryCode = (name: string) => {
-    const map: Record<string, string> = { 'India': 'IN', 'Bangladesh': 'BD', 'Nepal': 'NP', 'Sri Lanka': 'LK', 'Pakistan': 'PK' };
-    return map[name] || '';
-  };
-
-  const handleCountryChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setForm(prev => ({ ...prev, country: e.target.value, state: '', city: '' }));
-    setSelectedStateCode('');
-  };
-
-  const handleStateSelect = (e: ChangeEvent<HTMLSelectElement>) => {
-    const code = e.target.value;
-    setSelectedStateCode(code);
-    const cCode = getCountryCode(form.country);
-    const stateName = State.getStateByCodeAndCountry(code, cCode)?.name || code;
-    setForm(prev => ({ ...prev, state: stateName, city: '' }));
-  };
 
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpValue, setOtpValue] = useState('');
@@ -88,15 +66,38 @@ export default function SignupPage() {
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
 
-  const handleChange = useCallback((field: keyof FormState) => (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    if (field === 'phone') setPhoneVerified(false);
-  }, []);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(signupSchema) as any,
+    defaultValues: { 
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      phone: '',
+      farm_size_acres: '',
+      country: 'India', 
+      state: '', 
+      city: '' 
+    },
+  });
 
-  const toggleShowPw = useCallback(() => setShowPw((p) => !p), []);
+  const country = watch('country');
+  const phone = watch('phone');
+
+  const getCountryCode = (name: string) => {
+    const map: Record<string, string> = { India: 'IN', Bangladesh: 'BD', Nepal: 'NP', 'Sri Lanka': 'LK', Pakistan: 'PK' };
+    return map[name] || '';
+  };
+
+  const cCode = getCountryCode(country);
 
   const handleSendOtp = async () => {
-    const phone = form.phone.trim();
     if (!phone) { toast.error('Please enter a phone number first.'); return; }
     setOtpSending(true);
     try {
@@ -115,7 +116,7 @@ export default function SignupPage() {
     if (otpValue.length !== 6) { toast.error('Please enter a 6-digit OTP.'); return; }
     setOtpVerifying(true);
     try {
-      await authAPI.verifyOtp(form.phone.trim(), otpValue);
+      await authAPI.verifyOtp(phone || '', otpValue);
       toast.success('Phone number verified! ✅');
       setPhoneVerified(true);
       setShowOtpModal(false);
@@ -130,7 +131,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await googleLogin(credential);
-      toast.success('Account created! Welcome to PrithviCore 🌱');
+      toast.success('Account created! 🌱');
       router.push('/dashboard');
     } catch (err: unknown) {
       toast.error(getErrorMessage(err));
@@ -139,19 +140,22 @@ export default function SignupPage() {
     }
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (form.password !== form.confirmPassword) { toast.error('Passwords do not match.'); return; }
-    if (form.password.length < 6) { toast.error('Password must be at least 6 characters.'); return; }
+  const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
       await signup({
-        name: form.name.trim(), email: form.email.trim(), password: form.password,
-        phone: form.phone.trim() || undefined,
-        farm_size_acres: form.farm_size_acres ? parseFloat(form.farm_size_acres) : undefined,
-        farm_location: { city: form.city.trim() || undefined, state: form.state.trim() || undefined, country: form.country || 'India' },
+        name: data.name.trim(),
+        email: data.email.trim(),
+        password: data.password,
+        phone: data.phone?.trim() || undefined,
+        farm_size_acres: data.farm_size_acres ? parseFloat(data.farm_size_acres) : undefined,
+        farm_location: {
+          city: data.city || undefined,
+          state: data.state || undefined,
+          country: data.country || 'India',
+        },
       });
-      toast.success('Account created! Welcome to PrithviCore 🌱');
+      toast.success('Account created! 🌱');
       router.push('/dashboard');
     } catch (err: unknown) {
       toast.error(getErrorMessage(err));
@@ -159,6 +163,8 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
+
+  const toggleShowPw = () => setShowPw((p) => !p);
 
   return (
     <div className="min-h-screen bg-background flex selection:bg-primary/20">
@@ -198,7 +204,6 @@ export default function SignupPage() {
               <Leaf size={26} className="text-white" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Join PrithviCore</h1>
-            <p className="text-foreground/60 dark:text-foreground/70 mt-1.5 text-sm">Start monitoring your farm with real-time IoT data</p>
           </div>
 
           <Card className="shadow-2xl shadow-emerald-500/5 dark:shadow-emerald-500/10 rounded-2xl overflow-hidden dark:ring-1 dark:ring-emerald-500/10">
@@ -213,38 +218,49 @@ export default function SignupPage() {
                 <div className="flex-1 h-px bg-border/50 dark:bg-emerald-500/15" />
               </div>
 
-              <form onSubmit={handleSubmit} noValidate className="space-y-5">
+              <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField id="signup-name" label="Full Name" value={form.name} onChange={handleChange('name')} placeholder="Name" required autoComplete="name" />
                   <div className="space-y-1.5">
-                    <label htmlFor="signup-phone" className="block text-sm font-medium text-foreground">Phone</label>
+                    <label className="text-sm font-medium text-foreground">Full Name</label>
+                    <Input {...register('name')} placeholder="Full Name" />
+                    {errors.name && <p className="text-xs text-destructive mt-1">{errors.name.message}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">Phone</label>
                     <div className="flex gap-2">
-                      <Input id="signup-phone" type="tel" value={form.phone} onChange={handleChange('phone')} placeholder="Mobile Number" autoComplete="tel" className="flex-1" />
-                      {form.phone.trim() && !phoneVerified && (
-                        <Button type="button" variant="outline" onClick={handleSendOtp} disabled={otpSending} className="flex-shrink-0 text-xs px-3 h-11">
+                      <Input {...register('phone')} placeholder="Mobile Number" className="flex-1" />
+                      {phone?.trim() && !phoneVerified && (
+                        <Button type="button" variant="outline" onClick={handleSendOtp} disabled={otpSending} className="flex-shrink-0 text-xs h-11">
                           {otpSending ? <Loader size={12} className="animate-spin mr-1" /> : <Phone size={12} className="mr-1" />} Verify
                         </Button>
                       )}
-                      {phoneVerified && (
-                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex-shrink-0 px-2">
-                          <CheckCircle size={14} /> Verified
-                        </span>
-                      )}
                     </div>
+                    {phoneVerified && <p className="text-xs text-emerald-500 font-medium mt-1">✓ Verified</p>}
                   </div>
                 </div>
 
-                <FormField id="signup-email" label="Email" type="email" value={form.email} onChange={handleChange('email')} placeholder="Email Address" required autoComplete="email" />
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Email</label>
+                  <Input type="email" {...register('email')} placeholder="Email Address" />
+                  {errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField id="signup-password" label="Password" type={showPw ? 'text' : 'password'} value={form.password} onChange={handleChange('password')} placeholder="Min 6 characters" required minLength={6} autoComplete="new-password"
-                    extra={
-                      <button type="button" onClick={toggleShowPw} className="text-foreground/50 dark:text-foreground/60 hover:text-foreground transition-colors">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">Password</label>
+                    <div className="relative">
+                      <Input type={showPw ? 'text' : 'password'} {...register('password')} placeholder="Min 6 characters" />
+                      <button type="button" onClick={toggleShowPw} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground transition-colors">
                         {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
-                    }
-                  />
-                  <FormField id="signup-confirm-password" label="Confirm Password" type="password" value={form.confirmPassword} onChange={handleChange('confirmPassword')} placeholder="Repeat password" required autoComplete="new-password" />
+                    </div>
+                    {errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">Confirm Password</label>
+                    <Input type="password" {...register('confirmPassword')} placeholder="Confirm Password" />
+                    {errors.confirmPassword && <p className="text-xs text-destructive mt-1">{errors.confirmPassword.message}</p>}
+                  </div>
                 </div>
 
                 {/* Farm details */}
@@ -252,39 +268,38 @@ export default function SignupPage() {
                   <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-4">Farm Details (Optional)</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label htmlFor="signup-state" className="block text-sm font-medium text-foreground">State</label>
-                      {getCountryCode(form.country) ? (
-                        <select id="signup-state" value={selectedStateCode} onChange={handleStateSelect} className="flex h-11 w-full rounded-xl border border-border/50 bg-background/60 backdrop-blur-sm px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/60 transition-all">
-                          <option value="">Select State</option>
-                          {State.getStatesOfCountry(getCountryCode(form.country)).map(s => (
-                            <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <Input id="signup-state" value={form.state} onChange={handleChange('state')} placeholder="State" />
-                      )}
+                      <label className="text-sm font-medium text-foreground">Country</label>
+                      <select {...register('country')} onChange={(e) => { register('country').onChange(e); setValue('state', ''); setValue('city', ''); setSelectedStateCode(''); }} className="flex h-11 w-full rounded-xl border border-border/50 bg-background/60 backdrop-blur-sm px-4 py-2 text-sm focus:ring-2 focus:ring-primary/40 outline-none transition-all">
+                        {['India', 'Bangladesh', 'Nepal', 'Sri Lanka', 'Pakistan', 'Other'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label htmlFor="signup-city" className="block text-sm font-medium text-foreground">City / Village</label>
-                      {getCountryCode(form.country) && selectedStateCode ? (
-                        <select id="signup-city" value={form.city} onChange={handleChange('city')} className="flex h-11 w-full rounded-xl border border-border/50 bg-background/60 backdrop-blur-sm px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/60 transition-all">
-                          <option value="">Select City</option>
-                          {City.getCitiesOfState(getCountryCode(form.country), selectedStateCode).map(c => (
-                            <option key={c.name} value={c.name}>{c.name}</option>
-                          ))}
+                      <label className="text-sm font-medium text-foreground">State</label>
+                      {cCode ? (
+                        <select value={selectedStateCode} onChange={(e) => { const code = e.target.value; setSelectedStateCode(code); const sName = State.getStateByCodeAndCountry(code, cCode)?.name || code; setValue('state', sName); setValue('city', ''); }} className="flex h-11 w-full rounded-xl border border-border/50 bg-background/60 backdrop-blur-sm px-4 py-2 text-sm focus:ring-2 focus:ring-primary/40 outline-none transition-all">
+                          <option value="">Select State</option>
+                          {State.getStatesOfCountry(cCode).map(s => <option key={s.isoCode} value={s.isoCode}>{s.name}</option>)}
                         </select>
                       ) : (
-                        <Input id="signup-city" value={form.city} onChange={handleChange('city')} placeholder="City / Village" />
+                        <Input {...register('state')} placeholder="State" />
                       )}
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                    <FormField id="signup-farm-size" label="Farm Size (acres)" type="number" value={form.farm_size_acres} onChange={handleChange('farm_size_acres')} placeholder="e.g. 5" />
                     <div className="space-y-1.5">
-                      <label htmlFor="signup-country" className="block text-sm font-medium text-foreground">Country</label>
-                      <select id="signup-country" value={form.country} onChange={handleCountryChange} className="flex h-11 w-full rounded-xl border border-border/50 bg-background/60 backdrop-blur-sm px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/60 transition-all">
-                        {['India', 'Bangladesh', 'Nepal', 'Sri Lanka', 'Pakistan', 'Other'].map((c) => (<option key={c} value={c}>{c}</option>))}
-                      </select>
+                      <label className="text-sm font-medium text-foreground">City / Village</label>
+                      {cCode && selectedStateCode ? (
+                        <select {...register('city')} className="flex h-11 w-full rounded-xl border border-border/50 bg-background/60 backdrop-blur-sm px-4 py-2 text-sm focus:ring-2 focus:ring-primary/40 outline-none transition-all">
+                          <option value="">Select City</option>
+                          {City.getCitiesOfState(cCode, selectedStateCode).map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                        </select>
+                      ) : (
+                        <Input {...register('city')} placeholder="City / Village" />
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-foreground">Farm Size (acres)</label>
+                      <Input type="number" {...register('farm_size_acres')} placeholder="e.g. 5" />
                     </div>
                   </div>
                 </div>
@@ -304,26 +319,23 @@ export default function SignupPage() {
         {/* OTP Modal */}
         {showOtpModal && (
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-sm shadow-2xl animate-slide-up">
+             <Card className="w-full max-w-sm shadow-2xl">
               <CardContent className="p-8">
                 <div className="text-center mb-6 flex flex-col items-center">
                   <div className="w-14 h-14 bg-accent rounded-full flex items-center justify-center text-2xl mb-4">📱</div>
                   <h3 className="text-xl font-bold text-foreground">Verify your phone</h3>
                   <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                    Enter the 6-digit OTP sent to <strong className="text-foreground">{form.phone}</strong>
+                    Enter the 6-digit OTP sent to <strong className="text-foreground">{phone}</strong>
                   </p>
-                  <div className="text-xs text-orange-600 dark:text-orange-400 mt-4 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-lg px-3 py-2 font-medium">
-                    💡 Mock mode: Check backend console for OTP
-                  </div>
                 </div>
-                <Input type="text" maxLength={6} value={otpValue} onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="••••••" className="text-center text-2xl tracking-[0.5em] font-bold h-14 mb-6" autoFocus />
+                <Input type="text" maxLength={6} value={otpValue} onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ''))} className="text-center text-2xl tracking-[0.5em] font-bold h-14 mb-6" autoFocus />
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setShowOtpModal(false)} className="flex-1 h-11">Cancel</Button>
                   <Button onClick={handleVerifyOtp} disabled={otpVerifying || otpValue.length !== 6} className="flex-1 h-11">
                     {otpVerifying ? <Loader size={16} className="animate-spin" /> : 'Verify'}
                   </Button>
                 </div>
-                <button type="button" onClick={handleSendOtp} disabled={otpSending} className="w-full mt-4 text-xs text-primary font-semibold hover:underline disabled:opacity-50">
+                <button type="button" onClick={handleSendOtp} disabled={otpSending} className="w-full mt-4 text-xs text-primary font-semibold hover:underline">
                   {otpSending ? 'Sending...' : 'Resend OTP'}
                 </button>
               </CardContent>

@@ -8,6 +8,31 @@ const OTP = require('../models/OTP');
 const { protect, signToken } = require('../middleware/auth');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const logger = require('../utils/logger');
+
+// Helper to send token in httpOnly cookie
+const sendTokenResponse = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + (process.env.JWT_COOKIE_EXPIRES_IN || 7) * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  };
+
+  res
+    .status(statusCode)
+    .cookie('token', token, cookieOptions)
+    .json({
+      message: statusCode === 201 ? 'Account created' : 'Login successful',
+      user: user.toJSON(),
+      // We still return token for backward compatibility during migration
+      token, 
+    });
+};
 
 // ─── Auth-specific brute-force limiter ───────────────────────────────────────
 // Only 5 attempts per IP per 15 minutes on sensitive auth routes
@@ -51,13 +76,9 @@ router.post('/signup', authLimiter, [
 
     const token = signToken(user._id);
 
-    res.status(201).json({
-      message: 'Account created successfully',
-      token,
-      user: user.toJSON(),
-    });
+    sendTokenResponse(user, 201, res);
   } catch (err) {
-    console.error('[SIGNUP ERROR]', err);
+    logger.error('[SIGNUP ERROR]', err);
     res.status(500).json({ error: 'Failed to create account' });
   }
 });
@@ -86,13 +107,9 @@ router.post('/login', authLimiter, [
 
     const token = signToken(user._id);
 
-    res.json({
-      message: 'Login successful',
-      token,
-      user: user.toJSON(),
-    });
+    sendTokenResponse(user, 200, res);
   } catch (err) {
-    console.error('[LOGIN ERROR]', err);
+    logger.error('[LOGIN ERROR]', err);
     res.status(500).json({ error: 'Login failed' });
   }
 });
@@ -218,13 +235,9 @@ router.post('/google', [
 
     const token = signToken(user._id);
 
-    res.json({
-      message: 'Google Login successful',
-      token,
-      user: user.toJSON(),
-    });
+    sendTokenResponse(user, 200, res);
   } catch (err) {
-    console.error('[GOOGLE LOGIN ERROR]', err);
+    logger.error('[GOOGLE LOGIN ERROR]', err);
     res.status(500).json({ error: 'Google login failed' });
   }
 });
@@ -288,9 +301,19 @@ router.post('/verify-otp', protect, [
 
     res.json({ message: 'Phone number verified successfully' });
   } catch (err) {
-    console.error('[VERIFY OTP ERROR]', err);
+    logger.error('[VERIFY OTP ERROR]', err);
     res.status(500).json({ error: 'Failed to verify OTP' });
   }
+});
+
+// ─── POST /api/auth/logout ───────────────────────────────
+router.post('/logout', (req, res) => {
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+
+  res.status(200).json({ message: 'Logged out successfully' });
 });
 
 module.exports = router;
