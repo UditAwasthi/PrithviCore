@@ -32,6 +32,36 @@ const protect = async (req, res, next) => {
   }
 };
 
+const optionalProtect = async (req, res, next) => {
+  try {
+    let token;
+    if (req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id).select('-password');
+      if (user && user.is_active) {
+        req.user = user;
+      }
+    }
+  } catch (err) {
+    // Ignore errors for optional auth (e.g. expired token)
+  }
+  next();
+};
+
+const requireRegisteredUser = (req, res, next) => {
+  if (req.user && req.user.is_guest) {
+    return res.status(403).json({ error: 'Please create an account to access this feature.' });
+  }
+  next();
+};
+
+
 // Middleware to verify IoT device API key (for sensor POSTs)
 const deviceAuth = (req, res, next) => {
   const apiKey = req.headers['x-api-key'] || req.query.api_key;
@@ -52,4 +82,4 @@ const signToken = (userId) => {
   });
 };
 
-module.exports = { protect, deviceAuth, signToken };
+module.exports = { protect, deviceAuth, signToken, optionalProtect, requireRegisteredUser };

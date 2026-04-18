@@ -5,7 +5,7 @@ const { OAuth2Client } = require('google-auth-library');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
-const { protect, signToken } = require('../middleware/auth');
+const { protect, signToken, optionalProtect, requireRegisteredUser } = require('../middleware/auth');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const logger = require('../utils/logger');
@@ -46,7 +46,7 @@ const authLimiter = rateLimit({
 });
 
 // ─── POST /api/auth/signup ───────────────────────────────
-router.post('/signup', authLimiter, [
+router.post('/signup', authLimiter, optionalProtect, [
   body('name').trim().notEmpty().withMessage('Name is required'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
@@ -64,15 +64,35 @@ router.post('/signup', authLimiter, [
       return res.status(409).json({ error: 'Email already registered' });
     }
 
-    const user = await User.create({
-      name,
-      email,
-      password,
-      farm_location,
-      phone,
-      farm_size_acres,
-      crop_types,
-    });
+    let user;
+    // If the user is currently a guest, convert their account to preserve data
+    if (req.user && req.user.is_guest) {
+      user = await User.findById(req.user._id);
+      if (user) {
+        user.name = name;
+        user.email = email;
+        user.password = password; // pre-save will hash this
+        user.farm_location = farm_location;
+        user.phone = phone;
+        user.farm_size_acres = farm_size_acres;
+        user.crop_types = crop_types;
+        user.is_guest = false;
+        await user.save();
+      }
+    }
+
+    // If no guest user was converted, create a new user
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        password,
+        farm_location,
+        phone,
+        farm_size_acres,
+        crop_types,
+      });
+    }
 
     const token = signToken(user._id);
 
@@ -114,6 +134,23 @@ router.post('/login', authLimiter, [
   }
 });
 
+// ─── POST /api/auth/guest ────────────────────────────────
+router.post('/guest', authLimiter, async (req, res) => {
+  try {
+    const guestEmail = `guest_${Date.now()}_${Math.floor(Math.random() * 10000)}@anonymous.local`;
+    const user = await User.create({
+      name: 'Guest User',
+      email: guestEmail,
+      is_guest: true,
+    });
+    
+    sendTokenResponse(user, 200, res);
+  } catch (err) {
+    logger.error('[GUEST LOGIN ERROR]', err);
+    res.status(500).json({ error: 'Guest login failed' });
+  }
+});
+
 
 // ─── GET /api/auth/me ────────────────────────────────────
 router.get('/me', protect, async (req, res) => {
@@ -121,7 +158,7 @@ router.get('/me', protect, async (req, res) => {
 });
 
 // ─── PUT /api/auth/profile ───────────────────────────────
-router.put('/profile', protect, async (req, res) => {
+router.put('/profile', protect, requireRegisteredUser, async (req, res) => {
   const { name, phone, farm_location, farm_size_acres, crop_types } = req.body;
 
   try {
@@ -137,7 +174,7 @@ router.put('/profile', protect, async (req, res) => {
 });
 
 // ─── PUT /api/auth/password ──────────────────────────────
-router.put('/password', protect, [
+router.put('/password', protect, requireRegisteredUser, [
   body('currentPassword').notEmpty(),
   body('newPassword').isLength({ min: 6 }),
 ], async (req, res) => {

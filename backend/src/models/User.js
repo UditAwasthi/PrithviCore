@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [
-      function () { return !this.googleId; },
+      function () { return !this.googleId && !this.is_guest; },
       'Password is required'
     ],
     minlength: [6, 'Password must be at least 6 characters'],
@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String },
   plan: { type: String, enum: ['free', 'kisan_basic', 'kisan_pro'], default: 'free' },
   is_active: { type: Boolean, default: true },
+  is_guest: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // Hash password before save
