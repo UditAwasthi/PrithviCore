@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Settings, Key, Globe, Activity, Copy, Check, AlertTriangle } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useAuth } from '@/lib/AuthContext';
 import { authAPI } from '@/lib/api';
+import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { cn } from '@/lib/utils';
 
@@ -44,12 +46,29 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
-          <Settings size={26} className="text-emerald-500" /> Integration Settings
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">Configure your IoT hardware integration and view system alert thresholds</p>
-      </div>
+      {user?.is_guest ? (
+        <div className="flex flex-col items-center justify-center min-h-[65vh] text-center max-w-md mx-auto animate-in fade-in zoom-in duration-500">
+          <div className="w-24 h-24 bg-gradient-to-br from-emerald-500/15 to-teal-500/15 rounded-3xl flex items-center justify-center text-emerald-500 mb-8 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/20 rotate-3">
+            <Settings size={40} />
+          </div>
+          <h2 className="text-3xl font-black text-foreground mb-4 tracking-tight">Advanced Settings Restricted</h2>
+          <p className="text-muted-foreground mb-10 text-base leading-relaxed">
+            Integration credentials and custom hardware thresholds are advanced features. Create an account to sync your physical sensors.
+          </p>
+          <Link href="/signup">
+            <Button size="lg" className="rounded-full shadow-xl shadow-emerald-500/20 px-8 py-6 text-base font-bold group">
+              Create Free Account
+            </Button>
+          </Link>
+        </div>
+      ) : (
+      <>
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
+            <Settings size={26} className="text-emerald-500" /> Integration Settings
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">Configure your IoT hardware integration and view system alert thresholds</p>
+        </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* API Credentials */}
@@ -134,6 +153,8 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+      </>
+      )}
     </AppLayout>
   );
 }

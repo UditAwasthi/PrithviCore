@@ -5,6 +5,10 @@ import { motion } from 'framer-motion';
 import { Droplets, Sprout, ShieldCheck, BarChart3, Users, Factory, ArrowRight, Activity, Leaf, ChevronRight, Zap, Globe, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { useAuth } from '@/lib/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 // ----------------------------------------------------------------------
 // Landing Navbar
@@ -44,6 +48,22 @@ function LandingNavbar() {
 // Hero Section
 // ----------------------------------------------------------------------
 function HeroSection() {
+  const { startGuestSession } = useAuth();
+  const router = useRouter();
+  const [isStarting, setIsStarting] = useState(false);
+
+  const handleFreeTrial = async () => {
+    setIsStarting(true);
+    try {
+      await startGuestSession();
+      router.push('/dashboard');
+      toast.success('Guest session started! Explore core features.');
+    } catch (err) {
+      toast.error('Failed to start guest session.');
+      setIsStarting(false);
+    }
+  };
+
   return (
     <section className="relative pt-32 pb-20 lg:pt-44 lg:pb-32 overflow-hidden flex flex-col items-center text-center px-6">
       {/* Animated Background Orbs */}
@@ -70,11 +90,14 @@ function HeroSection() {
         </p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link href="/signup">
-            <Button size="lg" className="rounded-full shadow-xl shadow-emerald-500/20 w-full sm:w-auto px-8 py-6 text-base font-bold group">
-              Start Free Trial <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+          <Button 
+            size="lg" 
+            onClick={handleFreeTrial} 
+            disabled={isStarting}
+            className="rounded-full shadow-xl shadow-emerald-500/20 w-full sm:w-auto px-8 py-6 text-base font-bold group"
+          >
+            {isStarting ? 'Starting...' : 'Start Free Trial'} <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
           <a href="#features">
             <Button size="lg" variant="outline" className="rounded-full w-full sm:w-auto px-8 py-6 text-base font-semibold">
               Explore Platform

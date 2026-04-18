@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Loader, User as UserIcon, MapPin, Ruler, CalendarClock, Mail } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
@@ -80,10 +81,27 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
-          <UserIcon size={26} className="text-emerald-500" /> My Profile
-        </h1>
+      {user?.is_guest ? (
+        <div className="flex flex-col items-center justify-center min-h-[65vh] text-center max-w-md mx-auto animate-in fade-in zoom-in duration-500">
+          <div className="w-24 h-24 bg-gradient-to-br from-emerald-500/15 to-teal-500/15 rounded-3xl flex items-center justify-center text-emerald-500 mb-8 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/20 rotate-3">
+            <UserIcon size={40} />
+          </div>
+          <h2 className="text-3xl font-black text-foreground mb-4 tracking-tight">Unlock Profile Setup</h2>
+          <p className="text-muted-foreground mb-10 text-base leading-relaxed">
+            You are currently exploring in free trial mode. Sign up to save your farm&apos;s location, dimensions, and preferences permanently.
+          </p>
+          <Link href="/signup">
+            <Button size="lg" className="rounded-full shadow-xl shadow-emerald-500/20 px-8 py-6 text-base font-bold group">
+              Create Free Account
+            </Button>
+          </Link>
+        </div>
+      ) : (
+      <>
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
+            <UserIcon size={26} className="text-emerald-500" /> My Profile
+          </h1>
         <p className="text-sm text-muted-foreground mt-1">Manage your personal details, farm information, and account security</p>
       </div>
 
@@ -178,6 +196,8 @@ export default function ProfilePage() {
 
         </div>
       </div>
+      </>
+      )}
     </AppLayout>
   );
 }

@@ -100,6 +100,7 @@ export const authAPI = {
   login:       (data: LoginPayload)  => api.post('/auth/login', data),
   signup:      (data: SignupPayload) => api.post('/auth/signup', data),
   googleLogin: (credential: string)  => api.post('/auth/google', { credential }),
+  guestLogin:  ()                    => api.post('/auth/guest'),
   sendOtp:     (phone: string)       => api.post('/auth/send-otp', { phone }),
   verifyOtp:   (phone: string, otp: string) => api.post('/auth/verify-otp', { phone, otp }),
   me:          ()                    => api.get('/auth/me'),

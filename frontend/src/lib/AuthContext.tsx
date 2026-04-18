@@ -51,6 +51,7 @@ export interface User {
   farm_size_acres?: number;
   crop_types?: string[];
   plan: string;
+  is_guest?: boolean;
 }
 
 interface AuthContextValue {
@@ -59,6 +60,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   signup: (data: SignupPayload) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  startGuestSession: () => Promise<void>;
   logout: () => void;
   updateUser: (u: User) => void;
 }
@@ -116,6 +118,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u);
   };
 
+  const startGuestSession = async (): Promise<void> => {
+    const res = await authAPI.guestLogin();
+    const { user: u } = res.data as { user: User };
+    userCache.set(u);
+    setUser(u);
+  };
+
   const logout = () => {
     authAPI.logout().finally(() => {
       userCache.remove();
@@ -130,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ------------------------------------------------------------------
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, signup, googleLogin, logout, updateUser }}
+      value={{ user, loading, login, signup, googleLogin, startGuestSession, logout, updateUser }}
     >
       {children}
     </AuthContext.Provider>
