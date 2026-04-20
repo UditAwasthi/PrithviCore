@@ -128,6 +128,10 @@ export const recommendationsAPI = {
   get: () => api.get('/recommendations'),
 };
 
+export const aiAnalysisAPI = {
+  analyze: (data?: object) => api.post('/ai-analysis', data || {}),
+};
+
 export const weatherAPI = {
   get: (params?: object) => api.get('/weather', { params }),
 };

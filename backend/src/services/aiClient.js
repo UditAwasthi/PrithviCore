@@ -342,4 +342,155 @@ async function diagnoseDisease(imageBuffer, mimeType) {
   }
 }
 
-module.exports = { diagnoseDisease, DISEASE_CLASSES, TREATMENTS };
+
+// ── Agricultural Decision Engine ─────────────────────────────────────────────
+// AI-powered sensor analysis that provides structured farming decisions
+// based on real-time IoT data.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SENSOR_ANALYSIS_PROMPT = `You are an agricultural decision engine embedded in an IoT system (PrithviCore).
+
+STRICT RULES:
+- Use ONLY the provided sensor data. Do not assume missing values.
+- Output MUST be valid minified JSON (no markdown, no explanations).
+- Keep responses extremely concise (total output <120 tokens).
+- If inputs are within optimal range, return "status":"normal" and minimal advice.
+- If any parameter is abnormal, include it in "alerts" with short reason.
+- Prefer rule-based conclusions (thresholds) over long explanations.
+- If data is insufficient, return {"status":"insufficient_data"}.
+
+OUTPUT SCHEMA (exact keys, no extras):
+{
+  "status": "normal|warning|critical|insufficient_data",
+  "irrigation": "on|off|monitor",
+  "soil": {"moisture":"low|optimal|high","ph":"acidic|optimal|alkaline","npk":"low|optimal|high"},
+  "actions": [],
+  "alerts": [],
+  "confidence": "low|medium|high"
+}
+
+DECISION GUIDELINES:
+- Moisture: <30 low → irrigation:on; 30–70 optimal; >70 high → irrigation:off
+- pH: <6 acidic; 6–7.5 optimal; >7.5 alkaline
+- Temperature: >35 → stress risk
+- Humidity: <30 → high evaporation risk
+- NPK: nitrogen<50 OR phosphorus<25 OR potassium<30 → npk:low
+- If 2+ issues → status:"critical"; 1 issue → "warning"; none → "normal"
+
+RESPOND WITH ONLY THE JSON OBJECT. NO OTHER TEXT.`;
+
+
+/**
+ * Analyze sensor data using OpenAI to produce structured farming decisions.
+ *
+ * @param {Object} sensorData - Latest sensor reading
+ * @param {number} sensorData.moisture     - Soil moisture (%)
+ * @param {number} sensorData.temperature  - Temperature (°C)
+ * @param {number} sensorData.humidity     - Air humidity (%)
+ * @param {number} sensorData.ph           - Soil pH
+ * @param {number} sensorData.nitrogen     - Nitrogen (mg/kg)
+ * @param {number} sensorData.phosphorus   - Phosphorus (mg/kg)
+ * @param {number} sensorData.potassium    - Potassium (mg/kg)
+ * @returns {Promise<{success: boolean, data: object|null, error: string|null}>}
+ */
+async function analyzeSensorData(sensorData) {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    logger.error('[AI CLIENT] OPENAI_API_KEY is not set for sensor analysis');
+    return { success: false, data: null, error: 'AI service is not configured.' };
+  }
+
+  // Validate we have at least some sensor data
+  const fields = ['moisture', 'temperature', 'humidity', 'ph', 'nitrogen', 'phosphorus', 'potassium'];
+  const available = fields.filter((f) => sensorData[f] != null);
+  if (available.length === 0) {
+    return {
+      success: true,
+      data: { status: 'insufficient_data' },
+    };
+  }
+
+  // Build compact sensor payload — only include non-null values
+  const sensorPayload = {};
+  for (const f of fields) {
+    if (sensorData[f] != null) sensorPayload[f] = sensorData[f];
+  }
+
+  try {
+    logger.info(`[AI CLIENT] Sending sensor data to OpenAI for analysis: ${JSON.stringify(sensorPayload)}`);
+
+    const response = await retryWithBackoff(async () => {
+      return axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: SENSOR_ANALYSIS_PROMPT },
+            { role: 'user', content: JSON.stringify(sensorPayload) },
+          ],
+          max_tokens: 200,
+          temperature: 0.0, // Fully deterministic for threshold-based decisions
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000, // 10s timeout — text-only, should be fast
+        }
+      );
+    });
+
+    const rawContent = response.data?.choices?.[0]?.message?.content?.trim();
+    logger.info(`[AI CLIENT] Sensor analysis response: ${rawContent}`);
+
+    if (!rawContent) {
+      return { success: false, data: null, error: 'AI returned an empty response.' };
+    }
+
+    // Parse JSON (handle markdown wrapping)
+    let parsed;
+    try {
+      parsed = JSON.parse(rawContent);
+    } catch {
+      const jsonMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[1].trim());
+      } else {
+        const objectMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (objectMatch) {
+          parsed = JSON.parse(objectMatch[0]);
+        } else {
+          throw new Error('No valid JSON in sensor analysis response');
+        }
+      }
+    }
+
+    return { success: true, data: parsed };
+  } catch (err) {
+    const status = err.response?.status;
+    const apiError = err.response?.data?.error?.message;
+
+    logger.error('[AI CLIENT] Sensor analysis failed', {
+      status,
+      message: apiError || err.message,
+    });
+
+    let userMessage;
+    if (status === 401) {
+      userMessage = 'AI service authentication failed.';
+    } else if (status === 429) {
+      userMessage = 'AI rate limit exceeded. Try again shortly.';
+    } else if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
+      userMessage = 'AI analysis timed out.';
+    } else {
+      userMessage = 'AI analysis temporarily unavailable.';
+    }
+
+    return { success: false, data: null, error: userMessage };
+  }
+}
+
+module.exports = { diagnoseDisease, analyzeSensorData, DISEASE_CLASSES, TREATMENTS };
+
