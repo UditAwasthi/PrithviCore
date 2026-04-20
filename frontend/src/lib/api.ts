@@ -1,20 +1,15 @@
 import axios, { AxiosError } from 'axios';
 
 // ---------------------------------------------------------------------------
-// Base URL — Dynamically detects environment.
-// In the browser, we use relative paths ('') so Vercel rewrites intercept
-// requests and route them to the backend securely under the same domain.
-// On the server (SSR), we use the absolute Render URL.
+// Base URL — Always point directly to the Render backend.
+// withCredentials + cross-origin requires an explicit URL (not relative '').
+// Relative paths only work if you have Next.js rewrites configured, which
+// also breaks cookie SameSite rules for cross-origin requests.
 // ---------------------------------------------------------------------------
-const isBrowser = typeof window !== 'undefined';
-const API_URL = isBrowser 
-  ? '' 
-  : (process.env.NEXT_PUBLIC_API_URL || 'https://agridrishti-project.onrender.com');
+const API_URL = 'https://agridrishti-project.onrender.com';
 
 // ---------------------------------------------------------------------------
 // Token helpers — localStorage is only available in the browser.
-// All reads/writes are guarded with typeof window checks so Next.js SSR
-// doesn't throw during the server-side build step.
 // ---------------------------------------------------------------------------
 export const tokenHelpers = {
   get: (): string | null => {
@@ -36,35 +31,35 @@ export const tokenHelpers = {
 // ---------------------------------------------------------------------------
 export const api = axios.create({
   baseURL: `${API_URL}/api`,
-  timeout: 120_000, 
+  timeout: 120_000,
   headers: { 'Content-Type': 'application/json' },
-  withCredentials: true, // Crucial for httpOnly cookies
+  withCredentials: true, // Required for cross-origin httpOnly cookies
 });
 
-// Attach JWT on every outgoing request
-// JWT is now handled automatically by the browser via httpOnly cookies.
-// We keep the interceptor for backward compatibility with 3rd party APIs if needed.
+// Attach JWT Bearer token on every request (fallback alongside httpOnly cookie).
+// The backend auth middleware accepts EITHER the cookie OR the Authorization header,
+// so this ensures auth works even if the cookie is blocked cross-origin.
 api.interceptors.request.use((config) => {
   const token = tokenHelpers.get();
-  if (token && !config.withCredentials) {
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Global 401 handler — clear token and redirect to login
+// Store token from login/signup responses into localStorage
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // Backend returns { token, user } — store it for the Bearer fallback above
+    const token = res.data?.token;
+    if (token) {
+      tokenHelpers.set(token);
+    }
+    return res;
+  },
   (err: AxiosError) => {
     if (err.response?.status === 401) {
       tokenHelpers.remove();
-      if (
-        typeof window !== 'undefined' &&
-        !window.location.pathname.startsWith('/login') &&
-        !window.location.pathname.startsWith('/signup')
-      ) {
-        window.location.href = '/login';
-      }
     }
     return Promise.reject(err);
   }
@@ -110,9 +105,9 @@ export const dashboardAPI = {
 };
 
 export const sensorAPI = {
-  latest:  ()               => api.get('/soil/latest'),
+  latest:  ()                => api.get('/soil/latest'),
   history: (params?: object) => api.get('/soil/history', { params }),
-  stats:   ()               => api.get('/sensor/stats'),
+  stats:   ()                => api.get('/sensor/stats'),
 };
 
 export const diseaseAPI = {
@@ -159,4 +154,3 @@ export const feedbackAPI = {
 };
 
 export default api;
-

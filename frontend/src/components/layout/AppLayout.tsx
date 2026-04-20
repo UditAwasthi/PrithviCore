@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
@@ -19,7 +18,6 @@ interface Alert {
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
-  const router = useRouter();
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useWebSocket((msg) => {
@@ -40,12 +38,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     }
   });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login');
-    }
-  }, [user, loading, router]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
@@ -61,8 +53,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
     );
   }
-
-  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors selection:bg-primary/20 relative z-0">
