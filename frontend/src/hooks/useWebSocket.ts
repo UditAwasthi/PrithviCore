@@ -55,9 +55,9 @@ export function useWebSocket(onMessage?: MessageHandler) {
       return;
     }
 
-    const WS_URL =
-      process.env.NEXT_PUBLIC_WS_URL ||
-      'wss://prithvicore-project.onrender.com';
+    // Ensure WebSocket URL ends with /ws path
+    const baseUrl = process.env.NEXT_PUBLIC_WS_URL?.replace(/\/$/, '') || 'wss://prithvicore-project.onrender.com';
+    const WS_URL = `${baseUrl}/ws`;
 
     // Don't open a second socket if one is already open/connecting
     if (
