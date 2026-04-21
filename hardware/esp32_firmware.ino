@@ -22,11 +22,11 @@
 #include <DHT.h>
 
 // ─── CONFIG ─────────────────────────────────────────────────────────────────
-const char* WIFI_SSID     = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID     = "OL-ESP32-AP";
+const char* WIFI_PASSWORD = "12345678";
 
-const char* API_URL  = "http://YOUR_BACKEND_IP:5000/api/sensor-data";
-const char* API_KEY  = "AGD-YOUR_DEVICE_KEY";   // Must start with "AGD-"
+const char* API_URL  = "https://prithvicore-project.onrender.com/api/sensor-data";
+const char* API_KEY  = "AGD-69b61f0f9fd223124ea8173c";   // Must start with "AGD-"
 
 // Send interval (milliseconds) – 5 minutes default
 const unsigned long SEND_INTERVAL = 5 * 60 * 1000UL;

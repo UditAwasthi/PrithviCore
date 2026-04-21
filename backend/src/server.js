@@ -29,12 +29,68 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const clients = new Set();
 
-wss.on('connection', (ws) => {
+// Ping interval to keep connections alive (prevents Render timeout)
+const PING_INTERVAL = 25000; // 25 seconds
+let pingInterval;
+
+// Heartbeat function to ping all clients
+function heartbeat() {
+  clients.forEach(client => {
+    if (client.isAlive === false) {
+      clients.delete(client);
+      return client.terminate();
+    }
+    client.isAlive = false;
+    client.ping();
+  });
+}
+
+// Start heartbeat when server starts
+function startHeartbeat() {
+  pingInterval = setInterval(heartbeat, PING_INTERVAL);
+}
+
+// Stop heartbeat on server shutdown
+function stopHeartbeat() {
+  if (pingInterval) clearInterval(pingInterval);
+}
+
+wss.on('connection', (ws, req) => {
   clients.add(ws);
-  logger.info(`[WS] Client connected. Total: ${clients.size}`);
+  ws.isAlive = true;
+  
+  // Log connection details
+  const clientIp = req.socket.remoteAddress;
+  const userAgent = req.headers['user-agent'] || 'unknown';
+  logger.info(`[WS] Client connected. IP: ${clientIp}, UA: ${userAgent.substring(0, 50)}... Total: ${clients.size}`);
+
+  // Handle pong response from client
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
+
+  // Handle incoming messages
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+      logger.info(`[WS] Received: ${data.event || 'unknown event'}`);
+      
+      // Handle ping from client
+      if (data.event === 'ping') {
+        ws.send(JSON.stringify({ event: 'pong', timestamp: new Date() }));
+      }
+    } catch (err) {
+      logger.warn(`[WS] Failed to parse message: ${err.message}`);
+    }
+  });
+
   ws.on('close', () => {
     clients.delete(ws);
     logger.info(`[WS] Client disconnected. Total: ${clients.size}`);
+  });
+
+  ws.on('error', (err) => {
+    logger.error(`[WS] Error: ${err.message}`);
   });
 });
 
@@ -133,10 +189,32 @@ const PORT = process.env.PORT || 5000;
 connectDB().then(() => {
   server.listen(PORT, () => {
     logger.info(`🚀 Server running on port ${PORT}`);
-    logger.info(`📡 WebSocket server initialized`);
+    logger.info(`📡 WebSocket server initialized (ping interval: ${PING_INTERVAL}ms)`);
     logger.info(`✨ Mode: ${process.env.NODE_ENV || 'development'}`);
+    startHeartbeat();
   });
 }).catch((err) => {
   logger.error('❌ Failed to start server:', err);
   process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully...');
+  stopHeartbeat();
+  clients.forEach(client => client.terminate());
+  server.close(() => {
+    logger.info('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully...');
+  stopHeartbeat();
+  clients.forEach(client => client.terminate());
+  server.close(() => {
+    logger.info('Server closed');
+    process.exit(0);
+  });
 });

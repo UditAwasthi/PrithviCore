@@ -104,7 +104,14 @@ export default function DashboardPage() {
       });
     }
   }, [qc]);
-  useWebSocket(wsHandler);
+  const ws = useWebSocket(wsHandler);
+  
+  // Log WebSocket errors for debugging
+  useEffect(() => {
+    if (ws.error) {
+      console.error('[WS] Dashboard error:', ws.error);
+    }
+  }, [ws.error]);
 
   const s = dash?.latest_reading ?? null;
   const wkly = dash?.weekly_trend ?? [];

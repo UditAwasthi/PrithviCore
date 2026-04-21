@@ -21,7 +21,7 @@ export default function Navbar({ alerts = [], onClearAlerts }: NavbarProps) {
   const [notifOpen,   setNotifOpen]   = useState(false);
 
   const noop = useCallback(() => {}, []);
-  const { connected } = useWebSocket(noop);
+  const { connected, error, reconnect } = useWebSocket(noop);
 
   const unread = alerts.length;
 

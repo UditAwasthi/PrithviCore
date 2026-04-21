@@ -20,7 +20,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
-  useWebSocket((msg) => {
+  const ws = useWebSocket((msg) => {
     if (msg.event === 'disease_alert') {
       const d = msg.data as {
         disease: string;
@@ -37,6 +37,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       toast.error(`⚠️ ${d.disease} detected on your farm!`);
     }
   });
+
+  // Log WebSocket errors for debugging
+  useEffect(() => {
+    if (ws.error) {
+      console.error('[WS] Connection error:', ws.error);
+    }
+  }, [ws.error]);
 
   if (loading) {
     return (
