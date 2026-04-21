@@ -116,8 +116,21 @@ export function useWebSocket(onMessage?: MessageHandler) {
       };
 
       ws.onerror = (event) => {
+        // Get more details from the event
         console.error('[WS] Error:', event);
-        setError('WebSocket connection error');
+        console.error('[WS] Error type:', event.type);
+        console.error('[WS] Target:', event.target);
+        console.error('[WS] ReadyState:', ws.readyState);
+        
+        // Determine specific error
+        let errorMsg = 'WebSocket connection error';
+        if (ws.readyState === WebSocket.CONNECTING) {
+          errorMsg = 'Connection timeout - backend may be sleeping';
+        } else if (ws.readyState === WebSocket.CLOSED) {
+          errorMsg = 'Connection closed - check network or backend';
+        }
+        
+        setError(errorMsg);
         // onclose fires right after onerror, so just close cleanly
         ws.close();
       };
